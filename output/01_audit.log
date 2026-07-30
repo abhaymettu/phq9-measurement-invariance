@@ -1,0 +1,73 @@
+=== Raw files ===
+DPQ_J   5533 rows, 11 cols
+DEMO_J  9254 rows, 46 cols
+DPQ columns: SEQN DPQ010 DPQ020 DPQ030 DPQ040 DPQ050 DPQ060 DPQ070 DPQ080 DPQ090 DPQ100 
+duplicate SEQN: DPQ 0, DEMO 0
+DPQ100 present in file: TRUE (excluded from the factor, it is the
+  functional-impairment item, not a symptom item)
+
+=== Special codes on the nine items, raw ===
+       refused_7 dk_9  na max_valid
+DPQ010         4    4 439         3
+DPQ020         2    4 440         3
+DPQ030         3    4 440         3
+DPQ040         3    4 441         3
+DPQ050         2    3 441         3
+DPQ060         3    5 442         3
+DPQ070         2    3 442         3
+DPQ080         2    5 442         3
+DPQ090         2    3 443         3
+
+Any value outside 0-3 after recode: 0 
+
+=== Sample flow ===
+DEMO inner-join DPQ (DPQ is asked of 12+ only): 5533
+age 18+:                                       5533
+all nine items answered (complete case):        5068  (91.6% of 18+)
+dropped for partial or missing PHQ-9:           465
+of those, answered zero items:                  440
+of those, answered 1 to 8 items:                25
+zero MEC weight in the analytic sample:         0
+
+=== Is missingness related to the outcome? ===
+mean per-item score, partial responders: 0.504 (n = 25)
+mean per-item score, complete responders: 0.360 (n = 5068)
+
+=== Item distributions in the analytic sample (proportions) ===
+                              0      1      2      3
+1 Little interest        0.7461 0.1604 0.0547 0.0389
+2 Depressed mood         0.7599 0.1638 0.0440 0.0324
+3 Sleep problems         0.6139 0.2240 0.0752 0.0870
+4 Low energy             0.5081 0.3171 0.0896 0.0852
+5 Appetite change        0.7498 0.1531 0.0539 0.0432
+6 Feeling bad about self 0.8333 0.1135 0.0290 0.0243
+7 Trouble concentrating  0.8343 0.1018 0.0302 0.0337
+8 Psychomotor change     0.8934 0.0643 0.0237 0.0185
+9 Suicidal ideation      0.9623 0.0268 0.0063 0.0045
+
+Sparsest cell across all items and categories: 0.0045 
+Smallest cell count: 23 
+Categories with fewer than 10 respondents anywhere: 0 
+This sparsity, concentrated in category 3 of item 9, is the reason WLSMV
+with a polychoric basis is preferred over treating the items as continuous.
+
+=== Group sizes for the invariance tests ===
+
+  Male Female 
+  2478   2590 
+
+18-49   50+ 
+ 2431  2637 
+
+Mexican American   Other Hispanic            White            Black 
+             696              459             1792             1176 
+           Asian      Other/Multi 
+             675              270 
+
+=== Reliability and descriptives ===
+Cronbach alpha: 0.831
+Omega total:    0.840
+PHQ-9 sum: mean 3.24, sd 4.24, median 2, max 25
+share scoring >= 10 (moderate or worse), unweighted: 9.1%
+
+Wrote output/analytic_sample.rds

@@ -1,0 +1,19 @@
+"estimator","item","label","X2","somatic"
+"MLR","DPQ090","9 Suicidal ideation",66.0086038918143,FALSE
+"MLR","DPQ040","4 Low energy",51.7867228157553,TRUE
+"MLR","DPQ080","8 Psychomotor change",31.8975277863643,TRUE
+"MLR","DPQ050","5 Appetite change",24.2692843370156,TRUE
+"MLR","DPQ070","7 Trouble concentrating",19.536215984964,FALSE
+"MLR","DPQ030","3 Sleep problems",11.6167857610983,TRUE
+"MLR","DPQ010","1 Little interest",6.2609466628208,FALSE
+"MLR","DPQ060","6 Feeling bad about self",5.26173950607551,FALSE
+"MLR","DPQ020","2 Depressed mood",2.47487012831566,FALSE
+"WLSMV","DPQ040","4 Low energy",140.806028170419,TRUE
+"WLSMV","DPQ050","5 Appetite change",58.0760067970029,TRUE
+"WLSMV","DPQ030","3 Sleep problems",50.0635263249255,TRUE
+"WLSMV","DPQ090","9 Suicidal ideation",34.1406875617191,FALSE
+"WLSMV","DPQ010","1 Little interest",28.4397148079738,FALSE
+"WLSMV","DPQ080","8 Psychomotor change",27.5023826599712,TRUE
+"WLSMV","DPQ060","6 Feeling bad about self",24.0295343530414,FALSE
+"WLSMV","DPQ020","2 Depressed mood",21.8768719742319,FALSE
+"WLSMV","DPQ070","7 Trouble concentrating",9.8061804859627,FALSE

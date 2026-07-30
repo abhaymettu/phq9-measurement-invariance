@@ -1,0 +1,48 @@
+=== 1. Random two-group splits, 20 replications ===
+Same sequence, same 0.010 / 0.015 cutoffs, arbitrary groups.
+
+WLSMV  scalar dCFI: median +0.00007, worst -0.00049, range [-0.00049, +0.00067]
+       scalar dRMSEA: median -0.00556, worst -0.00468
+       FAIL verdicts: 0 of 20
+
+MLR    scalar dCFI: median -0.00465, worst -0.00558, range [-0.00558, -0.00417]
+       scalar dRMSEA: median -0.00118, worst -0.00093
+       FAIL verdicts: 0 of 20
+
+=== Random six-group splits, 10 replications (mirrors the race test) ===
+WLSMV  scalar dCFI: median +0.00037, worst -0.00090, FAIL 0 of 10
+MLR    scalar dCFI: median -0.00730, worst -0.00881, FAIL 0 of 10
+
+=== 2. Simulated non-invariance planted on item 5 (Appetite change) ===
+Group B's thresholds on item 5 are shifted on the latent response scale.
+Everything else is invariant by construction, n = 2,500 per group.
+The criterion here is the chi-square rise and the score-test ranking, not
+delta CFI: data generated from a true one-factor model fits so well that
+CFI is 1.000 at every rung, so delta CFI has no room to move. The 0.010
+cutoff is a rule for approximate misfit in real data, not for a model that
+is correct by construction. This is also the check that caught the
+intercept-identification bug documented in R/invariance.R.
+
+shift +0.0: chisq rise    11.3 on 18 df,  worst item = 4 Low energy            planted item rank 6/9  X2    1.8 vs   3.7 next
+shift +0.2: chisq rise    33.9 on 18 df,  worst item = 5 Appetite change       planted item rank 1/9  X2   18.6 vs   4.9 next
+shift +0.4: chisq rise    45.6 on 18 df,  worst item = 5 Appetite change       planted item rank 1/9  X2   47.8 vs   7.4 next
+shift +0.6: chisq rise   205.8 on 18 df,  worst item = 5 Appetite change       planted item rank 1/9  X2  225.8 vs   9.1 next
+
+With no shift the chi-square rise is at its degrees of freedom and the
+item ranking is noise, as it must be. With a shift the ranking puts the
+planted item first by a wide margin, so the localisation step points at the
+right item rather than scattering blame across the questionnaire.
+
+=== 3. Recovery of a known gap decomposition ===
+Simulate a true latent mean difference of 0.25 SD plus a planted
+intercept shift on item 5, then see whether decompose_gap splits the
+observed sum-score gap the way it was built. 20 replications, because one
+replication cannot distinguish a biased estimator from sampling noise.
+
+true latent gap        +0.250 SD   recovered mean +0.242 SD  (sd 0.039)
+true measurement part  +0.300 pts  recovered mean +0.297 pts (sd 0.025)
+true latent part       +1.583 pts  recovered mean +1.531 pts (sd 0.243)
+mean observed gap +1.831 pts, mean model-implied +1.828 pts
+bias in the measurement share: true 15.9%, recovered 16.5%
+
+Wrote output/negative_control.rds

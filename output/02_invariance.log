@@ -1,0 +1,137 @@
+=== Baseline one-factor CFA, single group, n = 5068 ===
+WLSMV  CFI 0.9809  RMSEA 0.0594  SRMR 0.0444  chisq(27) 508.9
+MLR    CFI 0.9340  RMSEA 0.0504  SRMR 0.0416  chisq(27) 374.0
+
+Standardised loadings (WLSMV):
+                     item loading
+        1 Little interest   0.772
+         2 Depressed mood   0.878
+         3 Sleep problems   0.705
+             4 Low energy   0.768
+        5 Appetite change   0.696
+ 6 Feeling bad about self   0.816
+  7 Trouble concentrating   0.728
+     8 Psychomotor change   0.721
+      9 Suicidal ideation   0.749
+
+=== sex, WLSMV (2 groups) ===
+      model chisq df    cfi   rmsea    srmr     d_cfi  d_rmsea verdict
+ configural 510.8 54 0.9817 0.05779 0.04487        NA       NA       -
+     metric 378.8 62 0.9873 0.04491 0.04672  0.005607 -0.01288    pass
+     scalar 720.7 80 0.9743 0.05623 0.04944 -0.012969  0.01132    FAIL
+
+=== sex, MLR (2 groups) ===
+      model chisq df    cfi   rmsea    srmr     d_cfi   d_rmsea verdict
+ configural 397.1 54 0.9339 0.05008 0.03895        NA        NA       -
+     metric 416.1 62 0.9318 0.04747 0.04954 -0.002109 -0.002603    pass
+     scalar 506.2 70 0.9160 0.04959 0.05258 -0.015812  0.002114    FAIL
+
+=== age, WLSMV (2 groups) ===
+      model chisq df    cfi   rmsea    srmr     d_cfi   d_rmsea verdict
+ configural 555.1 54 0.9803 0.06052 0.04705        NA        NA       -
+     metric 431.2 62 0.9855 0.04849 0.05063  0.005184 -0.012038    pass
+     scalar 518.8 80 0.9827 0.04653 0.04894 -0.002737 -0.001952    pass
+
+=== age, MLR (2 groups) ===
+      model chisq df    cfi   rmsea    srmr      d_cfi    d_rmsea verdict
+ configural 429.0 54 0.9303 0.05235 0.03957         NA         NA       -
+     metric 441.8 62 0.9294 0.04917 0.04749 -0.0009028 -0.0031785    pass
+     scalar 487.7 70 0.9224 0.04853 0.04822 -0.0070329 -0.0006446    pass
+
+=== race, WLSMV (6 groups) ===
+      model chisq  df    cfi   rmsea    srmr     d_cfi   d_rmsea verdict
+ configural 649.6 162 0.9808 0.05973 0.05679        NA        NA       -
+     metric 537.1 202 0.9868 0.04434 0.06542  0.006011 -0.015388    pass
+     scalar 801.2 292 0.9799 0.04546 0.06029 -0.006862  0.001122    pass
+
+=== race, MLR (6 groups) ===
+      model chisq  df    cfi   rmsea    srmr     d_cfi    d_rmsea verdict
+ configural 560.3 162 0.9264 0.05395 0.04604        NA         NA       -
+     metric 582.3 202 0.9297 0.04721 0.05953  0.003325 -0.0067391    pass
+     scalar 702.3 242 0.9149 0.04745 0.06179 -0.014796  0.0002442    FAIL
+
+Decision rule applied: scalar invariance is rejected if CFI drops by more
+than 0.010 or RMSEA rises by more than 0.015 relative to the metric model
+(Cheung and Rensvold 2002; Chen 2007). The scaled chi-square difference
+test is not used as the rule: at n = 5,068 it is significant for every
+model here, including the random-split negative control, so it carries no
+information about practical non-invariance.
+
+=== Chi-square difference tests, shown to make that point concrete ===
+
+Scaled Chi-Squared Difference Test (method = “satorra.bentler.2001”)
+
+lavaan->lavTestLRT():  
+   lavaan NOTE: The “Chisq” column contains standard test statistics, not the 
+   robust test that should be reported per model. A robust difference test is 
+   a function of two standard (not robust) statistics.
+
+                    Df   AIC   BIC   Chisq Chisq diff    RMSEA Df diff
+fits_sex$configural 54 79584 79936  980.49                            
+fits_sex$metric     62 79656 79956 1068.38     27.172 0.055309       8
+fits_sex$scalar     70 79778 80026 1206.43    144.433 0.080203       8
+                    Pr(>Chisq)    
+fits_sex$configural               
+fits_sex$metric      0.0006603 ***
+fits_sex$scalar      < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+=== Localising non-invariance across sex (WLSMV scalar model) ===
+               item_label      X2 somatic
+             4 Low energy 140.806    TRUE
+        5 Appetite change  58.076    TRUE
+         3 Sleep problems  50.064    TRUE
+      9 Suicidal ideation  34.141   FALSE
+        1 Little interest  28.440   FALSE
+     8 Psychomotor change  27.502    TRUE
+ 6 Feeling bad about self  24.030   FALSE
+         2 Depressed mood  21.877   FALSE
+  7 Trouble concentrating   9.806   FALSE
+
+Releasing constraints one item at a time, worst score statistic first:
+  free 1  item(s), latest [4 Low energy]: dCFI -0.0074  dRMSEA +0.0056  pass
+Partial scalar invariance reached after freeing: 4 Low energy 
+
+=== Localising non-invariance across sex (MLR scalar model) ===
+               item_label     X2 somatic
+      9 Suicidal ideation 66.009   FALSE
+             4 Low energy 51.787    TRUE
+     8 Psychomotor change 31.898    TRUE
+        5 Appetite change 24.269    TRUE
+  7 Trouble concentrating 19.536   FALSE
+         3 Sleep problems 11.617    TRUE
+        1 Little interest  6.261   FALSE
+ 6 Feeling bad about self  5.262   FALSE
+         2 Depressed mood  2.475   FALSE
+
+Releasing constraints one item at a time, worst score statistic first:
+  free 1  item(s), latest [9 Suicidal ideation]: dCFI -0.0124  dRMSEA +0.0015  FAIL
+  free 2  item(s), latest [4 Low energy]: dCFI -0.0081  dRMSEA +0.0004  pass
+Partial scalar invariance reached after freeing: 9 Suicidal ideation, 4 Low energy 
+
+Items flagged by both estimators: 4 Low energy 
+
+=== Consequence for a naive female minus male comparison ===
+observed gap in mean PHQ-9 sum, unweighted:      +0.926 points
+model-implied gap, partial scalar model:          +0.874 points
+  attributable to a real latent difference:       +0.774 points
+  attributable to items behaving differently:     +0.100 points
+  share of the model-implied gap that is measurement: 11.5%
+latent mean difference, partial model:  +0.190 SD
+latent mean difference, forcing full scalar invariance: +0.208 SD
+forcing invariance overstates the latent sex difference by 9.5%
+reference-group check: measurement part +0.100 with males as reference,
+  +0.100 with females as reference (share 11.5% vs 11.5%)
+
+=== Survey-weighted naive comparison (survey package) ===
+represents 232,015,248 US adults
+          sex     phq9         se
+Male     Male 2.709046 0.06175659
+Female Female 3.583767 0.13469683
+weighted female minus male gap: +0.875 points, 95% CI [0.563, 1.186], p = 3.1e-05
+
+Applying the same 11.5% measurement share to the weighted gap:
+  +0.100 of the +0.875 weighted point gap is measurement, not symptoms
+
+Wrote output/invariance_results.rds
