@@ -1,0 +1,6 @@
+data/
+*.Rout
+.Rhistory
+.RData
+__pycache__/
+.DS_Store
