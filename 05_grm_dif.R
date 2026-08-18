@@ -31,14 +31,23 @@ cat("which category k becomes the more likely response):\n")
 print(data.frame(item = PHQ_LABELS[PHQ_ITEMS],
                  round(pars[, c("a", "b1", "b2", "b3")], 3)), row.names = FALSE)
 
-# Unidimensionality is an assumption of every DIF test below. It is checked
-# here rather than assumed, in the same spirit as 01_audit: the limited
-# information M2 statistic and its RMSEA are the GRM analogue of the CFA fit
-# indices already reported for this instrument.
+# The limited-information M2 statistic and its RMSEA, the GRM analogue of the
+# CFA fit indices already reported for this instrument.
+#
+# What this does NOT establish is the assumption the DIF tests below actually
+# rest on. M2 is a global index: it asks whether one factor reproduces the
+# whole covariance structure. Conditional independence is a local property, and
+# two items can share variance beyond the factor while M2 looks excellent. That
+# matters here specifically, because a locally dependent pair inflates DIF on
+# that pair, and more so when one member is an anchor. An earlier version of
+# this script described M2 as the unidimensionality check and that was an
+# overclaim. 09_local_dependence.R is the check, and it finds dependence this
+# statistic cannot see.
 cat("\nModel fit (limited information M2):\n")
 m2 <- M2(m1)
 print(round(m2[, c("M2", "df", "p", "RMSEA", "SRMSR", "TLI", "CFI")], 4), row.names = FALSE)
 cat("\nFor comparison, the WLSMV CFA on the same items: CFI 0.9809, RMSEA 0.0594.\n")
+cat("Global fit is not the assumption the DIF tests below rest on. See 09.\n")
 
 # ---------------------------------------------------------------------------
 cat("\n\n=== 1. The default procedure: every other item as the anchor ===\n")
@@ -170,4 +179,6 @@ out <- list(pars = pars, m2 = m2, anchors = anchors,
 saveRDS(out, "output/grm_dif.rds")
 cat("\nWrote output/grm_dif.rds\n")
 cat("\nNOTE: a DIF result without its error rate is half a finding. 06 is the\n")
-cat("other half and this stage should not be read without it.\n")
+cat("other half and this stage should not be read without it. 09 tests the\n")
+cat("conditional-independence assumption these flags rest on, which the M2\n")
+cat("statistic above does not.\n")

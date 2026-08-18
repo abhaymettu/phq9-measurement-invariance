@@ -197,3 +197,78 @@ planted_effect_size <- function(pars, shift, bad_item = 5, n_per_group = 20000,
   es <- dif_effect_size(fit, items)
   es[bad_item, ]
 }
+
+# ---------------------------------------------------------------------------
+# Local dependence
+#
+# Every DIF test above assumes the items are conditionally independent given
+# the latent trait. Global fit does not test that assumption. Two items can
+# share variance beyond the factor while M2 and its RMSEA look fine, and a
+# locally dependent pair inflates DIF on that pair because the shared variance
+# has nowhere else to go. When one member of the pair is an ANCHOR, the effect
+# is worse than a nuisance: the extra variance is inside the items defining the
+# scale that the studied item is judged against.
+
+#' Yen's Q3: correlations among the residuals from a fitted unidimensional GRM.
+#'
+#' Raw Q3 carries a known negative bias of about -1/(J-1), because residuals
+#' are taken around a trait estimated from all J items and are therefore
+#' mechanically slightly anticorrelated. With nine items that is -0.125, which
+#' is large enough that reading raw Q3 against a "> 0.2" rule would find
+#' nothing anywhere, ever. Everything here is reported centred on the mean
+#' off-diagonal value, which is the standard correction, and the headline
+#' statistic is Q3max - Q3mean (Christensen, Makransky and Horton 2017).
+q3_matrix <- function(resp, items = names(resp)) {
+  m <- mirt(as.data.frame(resp), 1, itemtype = "graded", verbose = FALSE)
+  q <- residuals(m, type = "Q3", verbose = FALSE)
+  off <- q[lower.tri(q)]
+  list(raw = q, centred = q - mean(off), bias = mean(off),
+       stat = max(off) - mean(off), fit = m)
+}
+
+#' Long-format table of the item pairs, strongest centred residual first.
+q3_pairs <- function(q3) {
+  idx <- which(lower.tri(q3$raw), arr.ind = TRUE)
+  d <- data.frame(item_i = rownames(q3$raw)[idx[, 1]],
+                  item_j = colnames(q3$raw)[idx[, 2]],
+                  raw = q3$raw[idx], centred = q3$centred[idx])
+  d[order(-d$centred), ]
+}
+
+#' Simulate one sample from a correct unidimensional GRM. The null the observed
+#' Q3 statistic has to be judged against, since its distribution depends on the
+#' item parameters and sample size and is not tabulated for this instrument.
+sim_unidim <- function(pars, n, items = names(pars$a)) {
+  d <- t(vapply(seq_len(nrow(pars$b)), function(j) -pars$a[j] * pars$b[j, ],
+                numeric(ncol(pars$b))))
+  r <- as.data.frame(simdata(matrix(pars$a, ncol = 1), d, n,
+                             itemtype = rep("graded", length(pars$a))))
+  names(r) <- items
+  r
+}
+
+#' Simulate with local dependence deliberately planted on one pair, by adding a
+#' second factor that loads on those two items only. Without this the "no local
+#' dependence found" branch would be untestable: a statistic that cannot rise
+#' when dependence is present says nothing when it stays low.
+sim_ld <- function(pars, n, pair, load = 1.0, items = names(pars$a)) {
+  stopifnot(length(pair) == 2)
+  d <- t(vapply(seq_len(nrow(pars$b)), function(j) -pars$a[j] * pars$b[j, ],
+                numeric(ncol(pars$b))))
+  a <- cbind(pars$a, 0)
+  a[pair, 2] <- load
+  r <- as.data.frame(simdata(a, d, n, itemtype = rep("graded", length(pars$a))))
+  names(r) <- items
+  r
+}
+
+#' Collapse a locally dependent pair into a single testlet score.
+#' The standard remedy: if two items share variance, stop pretending they are
+#' two independent observations and score them as one. Costs the ability to
+#' test either member separately, which is why it is reported alongside the
+#' drop remedy rather than instead of it.
+make_testlet <- function(resp, pair, name = paste0("LD_", paste(pair, collapse = "_"))) {
+  out <- resp[, setdiff(names(resp), pair), drop = FALSE]
+  out[[name]] <- rowSums(resp[, pair])
+  out
+}

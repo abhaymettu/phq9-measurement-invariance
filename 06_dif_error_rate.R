@@ -252,16 +252,27 @@ cat("the number of guilty items rises. A contaminated one should not.\n\n")
 
 N_BAD    <- 0:4
 BAD_SET  <- c(4, 5, 9, 8)            # the items 05 flags most stably, in that order
-CONTAM_SHIFT <- 0.4                  # comfortably above every 80% threshold above
+# Contamination is a surface, not a line. How badly the anchor degrades depends
+# both on how MANY items carry bias and on how BIG that bias is, and reporting
+# one magnitude would leave the reader unable to tell a knife edge from a
+# gentle slope. Three magnitudes bracket the detection curve in section 3: one
+# below the 80% threshold, one just above it, one well above.
+CONTAM_SHIFTS <- c(0.2, 0.4, 0.8)
 
-contam_out <- mclapply(seq_len(length(N_BAD) * N_REPS), function(k) {
+contam_grid <- expand.grid(n_bad = N_BAD, shift = CONTAM_SHIFTS, rep = seq_len(N_REPS))
+# With nothing planted the shift is meaningless and every magnitude would
+# resimulate the identical null, so those rows are collapsed to one condition.
+contam_grid <- contam_grid[!(contam_grid$n_bad == 0 &
+                             contam_grid$shift != CONTAM_SHIFTS[1]), ]
+
+contam_out <- mclapply(seq_len(nrow(contam_grid)), function(k) {
   set.seed(5000 + k)
-  nb <- N_BAD[((k - 1) %% length(N_BAD)) + 1]
+  nb <- contam_grid$n_bad[k]
+  sh <- contam_grid$shift[k]
   bad <- if (nb == 0) integer(0) else BAD_SET[seq_len(nb)]
-  d <- sim_grm(pars, 2500, shift = if (nb == 0) 0 else CONTAM_SHIFT,
+  d <- sim_grm(pars, 2500, shift = if (nb == 0) 0 else sh,
                bad_item = if (nb == 0) 1 else bad,
                mean_diff = 0.19, items = PHQ_ITEMS)
-  if (nb == 0) bad <- integer(0)
   r <- try(run_procedures(d$resp, d$group), silent = TRUE)
   if (inherits(r, "try-error")) return(NULL)
   clean <- setdiff(seq_along(PHQ_ITEMS), bad)
@@ -270,7 +281,7 @@ contam_out <- mclapply(seq_len(length(N_BAD) * N_REPS), function(k) {
     # must not be counted as a clean item that passed either. Rate over the
     # clean items actually tested, or NA when none were.
     tested <- clean[!is.na(r[[p]][clean]) & !(p == "anchored" & r$anchor[clean])]
-    data.frame(n_bad = nb, procedure = p,
+    data.frame(n_bad = nb, shift = sh, procedure = p,
                false_alarm_rate = if (length(tested)) mean(r[[p]][tested]) else NA_real_,
                n_clean_tested = length(tested),
                # Contamination has a second, quieter cost: a guilty item that
@@ -281,15 +292,24 @@ contam_out <- mclapply(seq_len(length(N_BAD) * N_REPS), function(k) {
 }, mc.cores = N_CORES)
 contam_df <- do.call(rbind, Filter(Negate(is.null), contam_out))
 
-contam <- aggregate(cbind(false_alarm_rate, guilty_in_anchor) ~ n_bad + procedure,
+contam <- aggregate(cbind(false_alarm_rate, guilty_in_anchor) ~ n_bad + shift + procedure,
                     data = contam_df, FUN = function(x) mean(x, na.rm = TRUE),
                     na.action = na.pass)
-contam <- contam[order(contam$procedure, contam$n_bad), ]
-cat(sprintf("Shift %.1f logits on each guilty item, %d replications per condition.\n",
-            CONTAM_SHIFT, N_REPS))
-cat("false_alarm_rate is over the items where nothing was planted.\n\n")
-print(transform(contam, false_alarm_rate = round(false_alarm_rate, 3),
-                guilty_in_anchor = round(guilty_in_anchor, 2)), row.names = FALSE)
+# The n_bad = 0 null is one shared condition; label it at every magnitude so
+# each column of the surface has its own baseline row to be read against.
+z <- contam[contam$n_bad == 0, ]
+contam <- rbind(contam[contam$n_bad != 0, ],
+                do.call(rbind, lapply(CONTAM_SHIFTS[-1], function(v)
+                  transform(z, shift = v))), z)
+contam <- contam[order(contam$procedure, contam$shift, contam$n_bad), ]
+cat(sprintf("%d replications per cell. false_alarm_rate is over the items where\n", N_REPS))
+cat("nothing was planted. Rows at n_bad = 0 are the shared no-DIF null.\n\n")
+surface <- reshape(contam[, c("n_bad", "shift", "procedure", "false_alarm_rate")],
+                   direction = "wide", idvar = c("procedure", "n_bad"),
+                   timevar = "shift")
+names(surface) <- sub("^false_alarm_rate\\.", "shift_", names(surface))
+surface <- surface[order(surface$procedure, surface$n_bad), ]
+print(data.frame(surface[, 1:2], round(surface[, -(1:2)], 3)), row.names = FALSE)
 
 cat("\nRead the first and last row of each block. That slope, not the level, is\n")
 cat("the contamination: how much a procedure's false-alarm rate on innocent\n")
@@ -297,17 +317,37 @@ cat("items is driven by how many guilty items are in the questionnaire with\n")
 cat("them. It is the difference between a test of one item and a test of the\n")
 cat("company that item keeps.\n\n")
 for (p in PROCS) {
-  d <- contam[contam$procedure == p, ]
-  d <- d[!is.na(d$false_alarm_rate), ]
-  cat(sprintf("  %-10s %.3f with no DIF present -> %.3f with %d items carrying it (%+.3f)\n",
-              p, d$false_alarm_rate[1], d$false_alarm_rate[nrow(d)],
-              d$n_bad[nrow(d)], d$false_alarm_rate[nrow(d)] - d$false_alarm_rate[1]))
+  for (sh in CONTAM_SHIFTS) {
+    d <- contam[contam$procedure == p & contam$shift == sh, ]
+    d <- d[order(d$n_bad), ]
+    d <- d[!is.na(d$false_alarm_rate), ]
+    cat(sprintf("  %-10s shift %.1f: %.3f with no DIF present -> %.3f with %d items carrying it (%+.3f)\n",
+                p, sh, d$false_alarm_rate[1], d$false_alarm_rate[nrow(d)],
+                d$n_bad[nrow(d)], d$false_alarm_rate[nrow(d)] - d$false_alarm_rate[1]))
+  }
 }
-ga <- contam[contam$procedure == "anchored" & contam$n_bad > 0, ]
-cat(sprintf("\nAnd purification is not free: with %d guilty items, an average of %.2f\n",
-            max(ga$n_bad), ga$guilty_in_anchor[nrow(ga)]))
-cat("of them ended up inside the anchor set, where they are never tested and\n")
-cat("are instead defining the scale every other item is judged against.\n")
+# The anchored row is not monotone in the shift, and that is mechanism rather
+# than noise: purification finds guilty items more easily when their bias is
+# large, so at the biggest shift fewer of them survive into the anchor. The
+# guilty_in_anchor count below is the direct evidence for that reading.
+cat("\nThe purified row is not monotone in the bias size, which is not noise:\n")
+cat("purification spots a guilty item more easily the larger its bias, so at\n")
+cat("the widest shift fewer guilty items survive into the anchor. The\n")
+cat("guilty_in_anchor figure below is the direct evidence for that reading.\n")
+cat("\nReading across a row rather than down a column: at a bias size the\n")
+cat("procedure can barely detect, contamination is mild however many items\n")
+cat("carry it. The anchor breaks down when the bias is both widespread AND\n")
+cat("large enough to see, which is exactly the regime a real questionnaire with\n")
+cat("a systematic group difference sits in.\n")
+gtab <- contam[contam$procedure == "anchored" & contam$n_bad == max(N_BAD), ]
+gtab <- gtab[order(gtab$shift), ]
+cat(sprintf("\nAnd purification is not free. With %d guilty items, the average number of\n", max(N_BAD)))
+cat("them that ended up INSIDE the anchor set, never tested and instead defining\n")
+cat("the scale every other item is judged against:\n")
+for (i in seq_len(nrow(gtab)))
+  cat(sprintf("  shift %.1f: %.2f of %d guilty items became anchors\n",
+              gtab$shift[i], gtab$guilty_in_anchor[i], max(N_BAD)))
+
 
 # ---------------------------------------------------------------------------
 out <- list(null = null_df, contamination = contam_df, contamination_rates = contam, null_rates = null_tab, null_by_item = by_item,

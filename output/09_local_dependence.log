@@ -1,0 +1,106 @@
+=== 1. Residual dependence in the observed data ===
+Raw Q3 carries a mechanical negative bias of about -1/(J-1) = -0.125.
+Observed mean off-diagonal Q3 here: -0.0922. Everything below is centred
+on that mean, which is the standard correction; reading raw Q3 against a
+'greater than 0.2' rule would find nothing on a nine-item scale, ever.
+
+Strongest residual correlations, centred:
+                                           pair    raw centred
+                4 Low energy + 3 Sleep problems  0.067   0.159
+ 9 Suicidal ideation + 6 Feeling bad about self  0.056   0.148
+ 8 Psychomotor change + 7 Trouble concentrating  0.024   0.116
+         9 Suicidal ideation + 2 Depressed mood -0.007   0.085
+           5 Appetite change + 3 Sleep problems -0.011   0.081
+               5 Appetite change + 4 Low energy -0.012   0.080
+
+Q3max - Q3mean = 0.159
+
+--- The pairing that actually inflates DIF ---
+A flagged item sharing residual variance with an anchor item is the
+mechanism: the surplus variance sits inside the very items defining the
+scale that the flagged item is being judged against.
+
+Anchor set from 05: 2 Depressed mood | 6 Feeling bad about self | 3 Sleep problems | 1 Little interest 
+
+                 flagged             worst_anchor centred_q3
+            4 Low energy         3 Sleep problems      0.159
+     9 Suicidal ideation 6 Feeling bad about self      0.148
+       5 Appetite change         3 Sleep problems      0.081
+    8 Psychomotor change         3 Sleep problems      0.053
+ 7 Trouble concentrating         3 Sleep problems      0.043
+
+
+=== 2. What that number means, calibrated on this instrument ===
+Simulating 200 samples from a CORRECT unidimensional GRM with this
+questionnaire's own parameters and sample size. No local dependence exists
+in any of them, so this is what Q3 looks like when the assumption holds.
+A cutoff quoted from a simulation study run on other items at another n
+would be a weaker basis for the verdict than this.
+
+null Q3max - Q3mean over 200 replications: median 0.077, 95th pct 0.099, max 0.116
+observed: 0.159    empirical p = 0.000
+VERDICT: the observed dependence is larger than a correct unidimensional model produces
+
+=== Does that statistic bite? ===
+A negative result is worth nothing from a check that cannot go positive.
+Planting local dependence on the sleep/energy pair by adding a second
+factor loading on those two items only, then re-running the identical
+statistic. If this does not move, section 2 says nothing.
+
+ planted_loading median_stat pct_above_null_95
+             0.5       0.070              0.10
+             1.0       0.124              0.95
+
+For reference the null median is 0.077 and the observed value is 0.159.
+
+
+=== 3. Do the DIF flags survive the remedies? ===
+Whatever section 2 concluded, the flags get re-run under the standard
+treatments for local dependence. A verdict of 'not significant' is not a
+licence to skip the robustness check, because the pair with the largest
+residual correlation is also the pair carrying the largest DIF effect,
+and that coincidence is the thing a reviewer will ask about.
+
+Treating the strongest pair: 4 Low energy + 3 Sleep problems (centred Q3 +0.159)
+and the runner up:          9 Suicidal ideation + 6 Feeling bad about self (centred Q3 +0.148)
+
+Flag sets under each treatment (item numbers):
+
+  baseline (05)                    anchors 2,6,3,1          flags 4,5,7,8,9
+                                     (all nine items, purified anchor)
+  drop 3                           anchors 6,2,1,7          flags 4,5,8,9
+                                     (removes the anchor-side member of the top pair, so 4 is tested with its dependent partner gone)
+  testlet 4+3                      anchors 6,2,1,7          flags 5,8,9,LD4+3
+                                     (scores the dependent pair as one item instead of two)
+  LD partners barred from anchor   anchors 2,1,7,8          flags 3,4,5,9
+                                     (all nine items kept; the four items in the top two dependent pairs cannot serve as anchors)
+
+Effect size on the items of interest, where still testable:
+                      treatment       4       5       7       8       9   LD4+3
+                  baseline (05) -0.064* -0.050* +0.010* +0.041* +0.024*       -
+                         drop 3 -0.090* -0.059*  anchor +0.039* +0.024*       -
+                    testlet 4+3       - -0.059*  anchor +0.039* +0.024* -0.127*
+ LD partners barred from anchor -0.101* -0.068*  anchor  anchor +0.024*       -
+* = flagged at adjusted p < 0.05.  '-' = not in the model under that treatment.
+'anchor' = the item served as an anchor and was therefore NOT tested. That is
+not the same as being tested and cleared, and the difference matters: an item
+that becomes an anchor under a remedy has had its baseline flag neither
+confirmed nor contradicted.
+
+drop 3: flag set moves from {4,5,7,8,9} to {4,5,8,9}
+    became an anchor, so NOT tested: 7
+
+testlet 4+3: flag set moves from {4,5,7,8,9} to {5,8,9,LD4+3}
+    became an anchor, so NOT tested: 7
+
+LD partners barred from anchor: flag set moves from {4,5,7,8,9} to {3,4,5,9}
+    became an anchor, so NOT tested: 7,8
+
+Across all three remedies:
+  4 Low energy             tested in 2 of 3 remedies, flagged in 2
+  5 Appetite change        tested in 3 of 3 remedies, flagged in 3
+  7 Trouble concentrating  tested in 0 of 3 remedies, flagged in 0
+  8 Psychomotor change     tested in 2 of 3 remedies, flagged in 2
+  9 Suicidal ideation      tested in 3 of 3 remedies, flagged in 3
+
+Wrote output/local_dependence.rds and output/table7_local_dependence.csv

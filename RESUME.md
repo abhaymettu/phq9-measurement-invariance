@@ -13,6 +13,13 @@
   the false positive rate at 0.4 to 2.2% per item test against a nominal 5%, and a swept
   magnitude study put 80% detection at 0.054 item-score points, which the largest real effect
   in the data (0.064) only just clears.
+- Tested the leading alternative explanation for the headline before reporting it. Yen's Q3
+  on the model residuals found local dependence between the largest-effect item and an anchor
+  item, which is the configuration that inflates a DIF flag; the conventional cutoff would
+  have missed it, and simulating the null from the instrument's own parameters showed the
+  observed value exceeded all 200 draws. Re-running the DIF test under three standard
+  remedies moved the effect from -0.064 to -0.101 item-score points, so the dependence had
+  been attenuating the finding rather than producing it, and one flagged item did not survive.
 - Falsified my own first explanation of the result. The default all-other-item anchor flagged
   6 of 9 items and I attributed it to anchor contamination; the null controls could not
   support that, because a random split contains no real DIF to contaminate an anchor with.

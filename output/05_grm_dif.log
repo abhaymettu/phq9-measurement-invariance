@@ -19,6 +19,7 @@ Model fit (limited information M2):
  28.861  9 0.001 0.021 0.043 0.994 0.997
 
 For comparison, the WLSMV CFA on the same items: CFI 0.9809, RMSEA 0.0594.
+Global fit is not the assumption the DIF tests below rest on. See 09.
 
 
 === 1. The default procedure: every other item as the anchor ===
@@ -145,4 +146,6 @@ is the error this section exists to prevent.
 Wrote output/grm_dif.rds
 
 NOTE: a DIF result without its error rate is half a finding. 06 is the
-other half and this stage should not be read without it.
+other half and this stage should not be read without it. 09 tests the
+conditional-independence assumption these flags rest on, which the M2
+statistic above does not.

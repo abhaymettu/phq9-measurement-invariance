@@ -172,3 +172,84 @@ item-score points. It is in the output because n is large, and it is labelled th
 than dropped, because dropping it would be a specification search and reporting it plainly
 would be a false finding. Only items 4, 5 and 9 survive every anchor size and only those are
 described as the result.
+
+## Global fit was the wrong check for the assumption the DIF tests rest on
+
+`05` originally reported the limited-information M2 statistic and its RMSEA and called that
+the unidimensionality check. That was an overclaim and it is now labelled as one in the
+script. M2 asks whether one factor reproduces the whole covariance structure. Conditional
+independence is a local property: two items can share variance beyond the factor while M2
+looks excellent, and a locally dependent pair inflates DIF on that pair. The M2 for this fit
+is excellent (RMSEA 0.021, CFI 0.997) and there is local dependence in the data anyway, which
+is the concrete demonstration that the two are different questions.
+
+## The Q3 cutoff is simulated, not cited
+
+Raw Yen's Q3 carries a mechanical negative bias of about -1/(J-1), which is -0.125 on nine
+items, because residuals are taken around a trait estimated from all J items. Everything is
+reported centred on the mean off-diagonal value. The verdict then needs a reference
+distribution, and the conventional rule is Q3max - Q3mean > 0.20.
+
+That rule would have returned the wrong answer here. The observed statistic is 0.159, under
+the cutoff. Simulating 200 samples from a correct unidimensional GRM with this
+questionnaire's own parameters and sample size puts the null median at 0.077, the 95th
+percentile at 0.099 and the **maximum at 0.116**. The observed value exceeds every one of 200
+draws from a model with no local dependence in it at all. A cutoff derived on other items at
+another sample size was a weaker basis for the verdict than the instrument's own null, and in
+this case it was also a wrong one.
+
+**What would change my mind:** nothing about preferring the simulated null, but the null is
+conditional on the fitted parameters being right. If the one-factor model were badly
+misspecified in some other way, the reference distribution would inherit that.
+
+## Local dependence attenuated the headline effect rather than manufacturing it
+
+This was the alternative explanation for the whole result and it had to be tested before the
+finding could be described as measurement bias. The strongest dependent pair is item 4 (low
+energy) with item 3 (sleep), and item 3 was in the anchor set, so the surplus variance was
+sitting inside the items defining the scale item 4 was judged against. That is the exact
+mechanism that inflates a DIF flag.
+
+It runs the other way. Item 4's effect goes from -0.064 at baseline to -0.090 with item 3
+dropped and -0.101 with the dependent partners barred from the anchor. Scoring items 4 and 3
+as a single testlet gives -0.127, the largest effect anywhere in this analysis. The
+dependence was pulling the estimate toward zero, not away from it, because the contaminated
+anchor was partly absorbing the difference it was supposed to be measuring against.
+
+Item 7 is where I nearly made the repo's own signature error. Its effect prints as +0.000
+under all three remedies, which I first read as "tested and cleared". It was not tested: it
+became an anchor under every remedy, and an anchor has a SIDS of exactly zero by
+construction. The survival table now prints `anchor` rather than `+0.000` for that case, and
+the script reports how many remedies actually tested each item, because an untested item
+reported as a null result is the same mistake as an uncorrected anchor. Item 7's flag stands
+neither confirmed nor refuted by this stage; the reason to discount it is its 0.09 power in
+table 4.
+
+**What would change my mind:** if any remedy had moved item 4 toward zero, the headline would
+have needed rewriting rather than strengthening, and that is the result I was expecting when
+I built this.
+
+## Item 3 was hiding in the anchor
+
+Barring the dependent partners from anchor duty makes item 3 (sleep problems) itself flag for
+DIF. An item cannot be tested while it is serving as an anchor, so the baseline analysis in
+`05` could not have found this. It is reported because it is the clearest single illustration
+of why an anchor set is an assumption and not a neutral technical choice.
+
+## Contamination is a surface, not a line
+
+The first version of `06` section 4 characterised anchor contamination at one planted
+magnitude, which cannot distinguish a knife edge from a gentle slope. It now sweeps three
+magnitudes, chosen to bracket the detection curve in section 3: one below the 80% threshold,
+one just above, one well above. Three, not more, because the axis that carries the argument
+is the number of biased items and the magnitude sweep is there to show the claim is not an
+artifact of one convenient choice.
+
+## Table 4 carries its own power context
+
+The flagged items and the effect size the design can actually resolve were in different
+tables, which left the most important comparison in the analysis for the reader to notice.
+Table 4 now reports, per item, the 80% detection floor, the observed effect as a multiple of
+it, and the probability that an effect of exactly that size would have been detected at all.
+For most of the flagged items that probability is well under a half, which is the single most
+important qualification on the result and it should not be reachable only by cross-referencing.

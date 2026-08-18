@@ -276,6 +276,83 @@ if (requireNamespace("mirt", quietly = TRUE)) {
                                paste(round(es, 3), collapse = " ")))
     ok("effect_size_scales_with_the_shift")
   })
+
+  # -------------------------------------------------------------------------
+  # Local dependence. The Q3 statistic in 09 is the basis for a claim about
+  # whether the DIF flags are an artifact, so it has to do three things: carry
+  # the known negative bias out of the raw values, stay flat when the model is
+  # correct, and rise when dependence is actually there. A statistic that
+  # cannot go up says nothing when it stays down.
+  local({
+    set.seed(105)
+    pars <- list(a = setNames(rep(2, 9), PHQ_ITEMS),
+                 b = matrix(c(0.5, 1.3, 2.0), nrow = 9, ncol = 3, byrow = TRUE,
+                            dimnames = list(PHQ_ITEMS, c("b1", "b2", "b3"))))
+
+    clean <- q3_matrix(sim_unidim(pars, 3000, PHQ_ITEMS))
+    # Raw Q3 is biased low by roughly -1/(J-1); with nine items that is -0.125.
+    # If centring were dropped, every comparison against a positive cutoff
+    # would silently pass and 09 would always report "no local dependence".
+    check(clean$bias < -0.05,
+          paste("raw Q3 should carry the negative bias; got", round(clean$bias, 3)))
+    check(abs(mean(clean$centred[lower.tri(clean$centred)])) < 1e-8,
+          "centred Q3 must have mean zero off the diagonal")
+
+    ld <- q3_matrix(sim_ld(pars, 3000, PHQ_ITEMS[c(3, 4)], load = 1.2, PHQ_ITEMS))
+    check(ld$stat > clean$stat,
+          paste("planted dependence must raise Q3max - Q3mean; clean",
+                round(clean$stat, 3), "vs planted", round(ld$stat, 3)))
+    # And it must point at the right pair, not merely go up somewhere.
+    top <- q3_pairs(ld)[1, ]
+    check(setequal(c(top$item_i, top$item_j), PHQ_ITEMS[c(3, 4)]),
+          paste("top residual pair should be the planted one; got",
+                top$item_i, top$item_j))
+    ok("q3_is_unbiased_and_bites")
+  })
+
+  # -------------------------------------------------------------------------
+  # The testlet remedy has to actually merge the pair: one fewer item, the two
+  # members gone, and a combined score on the right 0..2*max scale. Getting
+  # this wrong would silently answer a different question in 09 section 3.
+  local({
+    set.seed(106)
+    r <- data.frame(matrix(sample(0:3, 9 * 50, TRUE), ncol = 9))
+    names(r) <- PHQ_ITEMS
+    t <- make_testlet(r, PHQ_ITEMS[c(3, 4)], name = "LD")
+    check(ncol(t) == 8, paste("testlet should leave 8 columns, got", ncol(t)))
+    check(!any(PHQ_ITEMS[c(3, 4)] %in% names(t)), "merged items must be removed")
+    check(all(t$LD == r[[PHQ_ITEMS[3]]] + r[[PHQ_ITEMS[4]]]),
+          "testlet score must be the sum of its two members")
+    ok("testlet_merges_the_pair")
+  })
+
+  # -------------------------------------------------------------------------
+  # An anchor is not a null result. grm_dif reports anchors as NA rather than
+  # as a tested-and-unflagged zero, and dif_effect_size necessarily gives them
+  # exactly 0 because they were constrained equal. Reading that 0 as evidence
+  # of no DIF is the mistake that nearly got written into 09's writeup, so the
+  # distinction is locked down here: an anchor must be identifiable as untested
+  # from the returned object alone, without consulting the anchor list.
+  local({
+    set.seed(107)
+    pars <- list(a = setNames(rep(2, 9), PHQ_ITEMS),
+                 b = matrix(c(0.5, 1.3, 2.0), nrow = 9, ncol = 3, byrow = TRUE,
+                            dimnames = list(PHQ_ITEMS, c("b1", "b2", "b3"))))
+    anch <- PHQ_ITEMS[c(1, 2, 6, 7)]
+    d <- sim_grm(pars, 1500, shift = 0.8, bad_item = 5, mean_diff = 0)
+    r <- grm_dif(d$resp, d$group, anchors = anch)
+
+    check(all(r$anchor == (r$item %in% anch)), "anchor column must mark the anchor set")
+    check(all(is.na(r$adj_p[r$anchor])), "an anchor has no p-value: it was never tested")
+    check(!any(r$flag[r$anchor]), "an anchor can never be flagged")
+    # The trap: effect size is a structural zero for anchors, so a caller that
+    # reads SIDS alone cannot tell "no effect" from "not measured".
+    es <- dif_effect_size(attr(r, "fit"), PHQ_ITEMS)
+    check(all(es$SIDS[r$anchor] == 0),
+          "anchors are constrained equal, so their SIDS is structurally 0")
+    check(any(es$SIDS[!r$anchor] != 0), "tested items should have non-zero effects")
+    ok("anchor_is_untested_not_null")
+  })
 } else {
   cat("skip irt_tests (mirt not installed)\n")
 }

@@ -183,6 +183,23 @@ equal true depression a woman scores 0.064 points lower on a 0 to 3 item than a 
 (appetite) is -0.050. Both negative effects are somatic items. No item shifts an expected
 score by even a tenth of a point.
 
+**Each flag is reported next to the effect this design can actually resolve.** The 80%
+detection floor is 0.054 item-score points (from the sweep below), so `table4` carries every
+item's effect as a multiple of that floor and the probability an effect of exactly that size
+would have been detected at all:
+
+| item | SIDS | effect / floor | power at its own effect |
+|---|---|---|---|
+| 4 Low energy | -0.064 | 1.18 | 0.88 |
+| 5 Appetite change | -0.050 | 0.93 | 0.73 |
+| 8 Psychomotor change | +0.041 | 0.77 | 0.57 |
+| 9 Suicidal ideation | +0.024 | 0.45 | 0.26 |
+| 7 Trouble concentrating | +0.010 | 0.18 | 0.09 |
+
+Only item 4 clears the floor. An effect the size of item 7's would be found 9% of the time,
+so its flag says more about n = 5,068 than about the item. These two facts used to live in
+separate tables and the comparison was left for the reader to make.
+
 **Which items flag depends on the anchor, and that is reported rather than hidden.** DIF is
 defined relative to the items you assume clean. The all-other-item default flags 6 of 9.
 Sweeping the anchor size from 1 to 6 moves the flagged set from six items to three:
@@ -227,23 +244,33 @@ actually tests the claim.
 
 ![Anchor contamination](output/fig5_anchor_contamination.png)
 
-**Contamination, planting bias on a growing number of items.** False-positive rate on the
-items where nothing was planted, at a 0.4 logit shift, 20 replications per condition:
+**Contamination, as a surface rather than a line.** How badly an anchor degrades depends
+both on how many items carry bias and on how large that bias is, so the sweep runs over three
+magnitudes bracketing the detection curve. False-positive rate on the items where nothing was
+planted, 20 replications per cell:
 
-| items carrying real bias | all-other anchor | purified anchor | lordif |
+| items biased | all-other 0.2 / 0.4 / 0.8 | purified 0.2 / 0.4 / 0.8 | lordif 0.2 / 0.4 / 0.8 |
 |---|---|---|---|
-| 0 | 0.006 | 0.000 | 0.033 |
-| 1 | 0.175 | 0.088 | 0.094 |
-| 2 | 0.429 | 0.100 | 0.279 |
-| 3 | 0.575 | 0.167 | 0.467 |
-| 4 | **0.870** | **0.267** | **0.900** |
+| 0 | 0.000 / 0.000 / 0.000 | 0.010 / 0.010 / 0.010 | 0.039 / 0.039 / 0.039 |
+| 1 | 0.056 / 0.162 / 0.562 | 0.062 / 0.012 / 0.038 | 0.062 / 0.119 / 0.306 |
+| 2 | 0.114 / 0.436 / 0.829 | 0.067 / 0.033 / 0.117 | 0.143 / 0.293 / 0.779 |
+| 3 | 0.133 / 0.617 / 0.967 | 0.058 / 0.158 / 0.125 | 0.117 / 0.567 / 0.950 |
+| 4 | 0.230 / **0.850** / **1.000** | 0.083 / **0.325** / **0.300** | 0.100 / **0.750** / **1.000** |
 
-The default anchor's false-positive rate on innocent items rises from 0.006 to 0.870 as four
-of nine items acquire real bias. The purified anchor rises to 0.267. That slope, not the
-level, is the contamination, and it only appears in the one condition that contains real DIF.
-Purification is not free either: with four guilty items, an average of 1.2 of them ended up
-inside the anchor set, where they are never tested and are instead defining the scale every
-other item is judged against.
+Reading down a column gives the original claim: with a 0.4 logit bias the default anchor goes
+from 0.000 to 0.850 while the purified one reaches 0.325. Reading across a row is the part
+one magnitude could not have shown: at a bias the procedure can barely detect (0.2) the
+default anchor tops out at 0.230 however many items carry it, and at a large bias (0.8) it
+reaches 1.000 — every innocent item flagged, every time. The anchor fails when the bias is
+both widespread and large enough to see, which is the regime a real questionnaire with a
+systematic group difference sits in.
+
+The purified row is not monotone in the bias size, and that is mechanism rather than noise:
+purification spots a guilty item more easily the larger its bias, so at the widest shift
+fewer guilty items survive into the anchor (0.90 of four at the widest shift, against
+1.05 at the narrower two).
+Purification is not free either — those are guilty items sitting inside the anchor, never
+tested, defining the scale every other item is judged against.
 
 ![Detection curve](output/fig4_detection_curve.png)
 
@@ -262,6 +289,86 @@ item-score points. The procedure that found it needs 0.054 points for 80% power.
 effect clears the floor, but only just, and every other flagged item sits below or near it.
 That is a substantially weaker claim than "five items show DIF across sex", and it is the
 claim the evidence supports.
+
+### Local dependence: the alternative explanation, tested
+
+Every DIF test above assumes the items are conditionally independent given the latent trait.
+`05` originally checked that with the limited-information M2 statistic, which was the wrong
+check: M2 is a global fit index, conditional independence is a local property, and two items
+can share variance beyond the factor while global fit looks excellent. It does here. The M2
+fit is very good (RMSEA 0.021, CFI 0.997) and there is local dependence in the data anyway.
+
+This matters because a locally dependent pair inflates DIF on that pair, and the PHQ-9
+somatic items are the pair most often reported as dependent in this literature. So the
+leading alternative explanation for the headline was untested. `09_local_dependence.R` tests
+it.
+
+**There is local dependence, and it sits exactly where it would do the most damage.** Yen's
+Q3 on the GRM residuals, centred to remove the mechanical -1/(J-1) bias (-0.092 observed):
+
+| pair | raw Q3 | centred |
+|---|---|---|
+| 4 Low energy + 3 Sleep problems | 0.067 | **+0.159** |
+| 9 Suicidal ideation + 6 Feeling bad about self | 0.056 | **+0.148** |
+| 8 Psychomotor change + 7 Trouble concentrating | 0.024 | +0.116 |
+
+The top two pairs each couple a **flagged item with an anchor item**. That is the mechanism
+that inflates a DIF flag: the surplus shared variance sits inside the very items defining the
+scale the flagged item is judged against.
+
+**The conventional cutoff would have got this wrong.** The usual rule is Q3max - Q3mean > 0.20
+and the observed statistic is 0.159, under it. Rather than cite a cutoff derived on other
+items at another sample size, `09` simulates 200 samples from a correct unidimensional GRM
+with this questionnaire's own parameters and n. That null has median 0.077, 95th percentile
+0.099, and **maximum 0.116**. The observed 0.159 exceeds all 200 draws (empirical p < 0.005).
+
+The statistic is also shown to bite, because a negative result from a check that cannot go
+positive is worth nothing: planting a second factor on the sleep/energy pair at loading 1.0
+puts 95% of replications above the null's 95th percentile.
+
+**The dependence was hiding the effect, not creating it.** This is the result I did not
+expect. Re-running the DIF test under the three standard remedies:
+
+| treatment | item 4 | item 5 | item 7 | item 8 | item 9 | testlet 4+3 |
+|---|---|---|---|---|---|---|
+| baseline (05) | -0.064* | -0.050* | +0.010* | +0.041* | +0.024* | – |
+| drop item 3 | **-0.090*** | -0.059* | anchor | +0.039* | +0.024* | – |
+| testlet 4+3 | – | -0.059* | anchor | +0.039* | +0.024* | **-0.127*** |
+| LD partners barred from anchor | **-0.101*** | -0.068* | anchor | anchor | +0.024* | – |
+
+`*` = flagged at adjusted p < 0.05. `anchor` = the item served as an anchor under that
+treatment and was therefore **not tested**, which is not the same as being tested and
+cleared. `–` = not in the model.
+
+Item 4's effect grows under every remedy that tests it, from -0.064 to -0.101, and scoring
+items 4 and 3 as a single testlet gives -0.127, the largest effect anywhere in this analysis.
+The contaminated anchor was partly absorbing the very difference it was supposed to measure
+against, pulling the estimate toward zero.
+
+Counting only the treatments in which each item was actually tested:
+
+| item | tested in | flagged in |
+|---|---|---|
+| 5 Appetite change | 3 of 3 | 3 |
+| 9 Suicidal ideation | 3 of 3 | 3 |
+| 4 Low energy | 2 of 3 | 2 |
+| 8 Psychomotor change | 2 of 3 | 2 |
+| 7 Trouble concentrating | **0 of 3** | 0 |
+
+**Item 7 is the honest gap.** It became an anchor under every remedy, so none of them tested
+it and none of them can clear it. Its baseline flag is neither confirmed nor contradicted
+here; the reason to discount it remains its 0.09 power, not this table. An earlier draft of
+this section read its `+0.000` as "tested and unflagged", which was wrong in exactly the way
+the anchor problem is wrong throughout this repo — an untested item is not a null result.
+
+**Item 3 itself flags for DIF** once the dependent partners are barred from anchor duty. An
+item cannot be tested while it is serving as an anchor, so `05` could not have found this. It
+is the clearest single illustration of why an anchor set is an assumption and not a neutral
+technical choice.
+
+Items 4, 5 and 9 are flagged in every treatment that tested them — the same three that
+survive every anchor size. Two independent robustness axes converging on the same set is the
+strongest statement this analysis supports.
 
 ### IRT against CFA
 
@@ -301,9 +408,10 @@ RSCRIPT=/usr/local/bin/Rscript ./run_all.sh
 
 R 4.5.1 with `lavaan`, `psych`, `survey`, `haven`, `dplyr`, `ggplot2`, `tidyr`, and for the
 IRT stages `mirt` and `lordif`. Stages 00 to 04 take about 90 seconds and fit roughly 130
-models. Stage 06 is the slow one: roughly 350 multigroup graded response models, about 12
-minutes on 10 cores, and it honours `N_SPLITS`, `N_REPS` and `N_CORES` if you want a smoke
-run. `Rscript tests.R` alone runs the ten assert-based tests in about 20 seconds. Raw XPT
+models. Stage 06 is the slow one: roughly 700 multigroup graded response models once the
+contamination surface is swept across three magnitudes. It honours `N_SPLITS`, `N_REPS` and
+`N_CORES` if you want a smoke run. Stage 09 simulates 200 null datasets and honours `N_NULL`.
+`Rscript tests.R` alone runs the twelve assert-based tests in about 30 seconds. Raw XPT
 files are gitignored and refetched by `00_download.R`.
 
 On macOS the `mirt` binary may fail to load with a `libtbb` symbol error coming from `qs2`;
@@ -323,6 +431,8 @@ R/grm.R                  the IRT logic: GRM fits, anchored and all-other DIF tes
 06_dif_error_rate.R      the error rate: null splits, impact-only null, contamination
                          by number of biased items, detection curve across effect sizes
 07_compare.R             IRT against CFA, read from saved output, nothing refit
+09_local_dependence.R    Yen's Q3 with a simulated null, a bite check, and whether
+                         the DIF flags survive the standard remedies for dependence
 08_dif_figures.R         two figures and three CSV tables for the IRT stages
 tests.R                  assert-based tests
 output/                  figures, tables, and the full logs of every script
@@ -361,6 +471,14 @@ output/                  figures, tables, and the full logs of every script
   the anchor sweep from a result into a sensitivity check.
 - **The IRT stages are unweighted too**, for the same reason and with the same limitation as
   the CFA.
+- **The local-dependence null is conditional on the fitted model.** The reference
+  distribution comes from simulating a correct one-factor GRM with these parameters. If the
+  one-factor model were badly misspecified in some other way, the null would inherit it.
+- **The Q3 check is weak against small dependence.** Planting a second factor at loading 0.5
+  put only 10% of replications past the null's 95th percentile. Absence of a flag here is not
+  evidence of conditional independence, only of dependence below what this design resolves.
+- **Item 3's DIF is found by a procedure chosen after seeing the Q3 result.** It is reported
+  because it illustrates the anchor problem, not as an independently established finding.
 
 ## References
 
@@ -373,3 +491,6 @@ output/                  figures, tables, and the full logs of every script
 - Choi, Gibbons and Crane (2011), *Journal of Statistical Software* 39: `lordif`.
 - Meade (2010), *Journal of Applied Psychology* 95: expected-score DIF effect sizes (SIDS,
   ESSD).
+- Yen (1984), *Applied Psychological Measurement* 8: the Q3 statistic.
+- Christensen, Makransky and Horton (2017), *Applied Psychological Measurement* 41: the
+  Q3max - Q3mean statistic and the bias correction.
