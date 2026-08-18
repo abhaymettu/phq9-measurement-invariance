@@ -494,3 +494,8 @@ output/                  figures, tables, and the full logs of every script
 - Yen (1984), *Applied Psychological Measurement* 8: the Q3 statistic.
 - Christensen, Makransky and Horton (2017), *Applied Psychological Measurement* 41: the
   Q3max - Q3mean statistic and the bias correction.
+
+## License
+
+MIT, see `LICENSE`. The NHANES data itself is US public domain and is not
+redistributed here; `00_download.R` fetches it from the CDC.
