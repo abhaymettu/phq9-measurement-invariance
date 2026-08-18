@@ -32,5 +32,22 @@ echo "### 04 figures and tables"
 "$R" 04_report.R
 
 echo
+echo "### 05 graded response model and DIF by sex"
+"$R" 05_grm_dif.R | tee output/05_grm_dif.log
+
+echo
+echo "### 06 DIF error rate (the slow one: ~350 multigroup GRM fits, parallel)"
+echo "###    set N_SPLITS / N_REPS / N_CORES to shrink it for a smoke run"
+"$R" 06_dif_error_rate.R | tee output/06_dif_error_rate.log
+
+echo
+echo "### 07 IRT vs CFA comparison"
+"$R" 07_compare.R | tee output/07_compare.log
+
+echo
+echo "### 08 IRT figures and tables"
+"$R" 08_dif_figures.R
+
+echo
 echo "done. output/:"
 ls -la output/

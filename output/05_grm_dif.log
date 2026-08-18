@@ -1,0 +1,148 @@
+=== Graded response model, single group, n = 5068 ===
+Sex: Female 2590  Male 2478 
+
+Slopes and thresholds (a is discrimination, b_k is the trait level at
+which category k becomes the more likely response):
+                     item     a    b1    b2    b3
+        1 Little interest 2.244 0.861 1.693 2.255
+         2 Depressed mood 3.239 0.816 1.630 2.099
+         3 Sleep problems 1.690 0.419 1.415 1.961
+             4 Low energy 2.098 0.043 1.230 1.792
+        5 Appetite change 1.778 0.940 1.811 2.419
+ 6 Feeling bad about self 2.641 1.159 1.923 2.364
+  7 Trouble concentrating 2.002 1.276 2.013 2.446
+     8 Psychomotor change 2.032 1.638 2.275 2.777
+      9 Suicidal ideation 2.420 2.196 2.842 3.255
+
+Model fit (limited information M2):
+     M2 df     p RMSEA SRMSR   TLI   CFI
+ 28.861  9 0.001 0.021 0.043 0.994 0.997
+
+For comparison, the WLSMV CFA on the same items: CFI 0.9809, RMSEA 0.0594.
+
+
+=== 1. The default procedure: every other item as the anchor ===
+Constrain all nine items across sex, free one item at a time, test the
+improvement. This is the standard default and requires no choices.
+
+                     item    X2 df  adj_p flag
+        1 Little interest 17.16  4 0.0027  DIF
+         2 Depressed mood  2.52  4 0.6419    .
+         3 Sleep problems  8.11  4 0.1126    .
+             4 Low energy 24.09  4 0.0003  DIF
+        5 Appetite change 31.87  4 0.0000  DIF
+ 6 Feeling bad about self  3.04  4 0.6201    .
+  7 Trouble concentrating 19.35  4 0.0012  DIF
+     8 Psychomotor change 21.47  4 0.0006  DIF
+      9 Suicidal ideation 23.20  4 0.0003  DIF
+
+Flagged: 6 of 9 items.
+6 of nine items cannot all be the anomaly. When most items carry DIF,
+the all-other-item anchor is contaminated by the very items it is meant to
+control for: the two groups' scales get linked through biased items, the
+common metric is pulled off true, and clean items inherit an apparent
+difference. The number to distrust here is 6 itself, not the individual p-values.
+
+That is a mechanism, not yet a finding, and it is not established by this
+table. Section 4 of 06 is where it is tested, by planting DIF on a growing
+number of items and measuring how often this procedure then blames an
+innocent one. Note also which check does NOT support it: on random splits
+of this sample the same procedure is conservative, well under nominal,
+because a coin-flip split contains no real DIF to contaminate an anchor
+with. A control has to contain the thing it is meant to control for.
+
+
+=== 2. Purified anchor ===
+Take the four items with the smallest statistic above as the anchor, free
+the rest, then test one studied item at a time against that fixed anchor.
+Rank-based anchor selection (Woods 2009). Four is a choice, and section 4
+sweeps it rather than defending it.
+
+Anchor set: 2 Depressed mood;  6 Feeling bad about self;  3 Sleep problems;  1 Little interest 
+
+                     item    X2 df  adj_p   flag   SIDS   ESSD
+        1 Little interest    NA NA     NA anchor  0.000  0.000
+         2 Depressed mood    NA NA     NA anchor  0.000  0.000
+         3 Sleep problems    NA NA     NA anchor  0.000  0.000
+             4 Low energy 20.13  4 0.0012    DIF -0.064 -0.105
+        5 Appetite change 30.48  4 0.0000    DIF -0.050 -0.122
+ 6 Feeling bad about self    NA NA     NA anchor  0.000  0.000
+  7 Trouble concentrating 15.58  4 0.0036    DIF  0.010  0.027
+     8 Psychomotor change 16.51  4 0.0030    DIF  0.041  0.153
+      9 Suicidal ideation 18.02  4 0.0020    DIF  0.024  0.175
+
+SIDS is the signed difference in expected item score between women and
+men at the same latent depression level, in raw points of a 0 to 3 item.
+ESSD is the same quantity standardised, so it reads like a Cohen's d.
+Sign convention: negative means the item under-reports for women, i.e. at
+equal true depression a woman scores lower on this item than a man.
+
+  4 Low energy             X2   20.1  adj p 0.0012  SIDS -0.064 pts  ESSD -0.105  somatic TRUE
+  5 Appetite change        X2   30.5  adj p 0.0000  SIDS -0.050 pts  ESSD -0.122  somatic TRUE
+  7 Trouble concentrating  X2   15.6  adj p 0.0036  SIDS +0.010 pts  ESSD +0.027  somatic FALSE
+  8 Psychomotor change     X2   16.5  adj p 0.0030  SIDS +0.041 pts  ESSD +0.153  somatic TRUE
+  9 Suicidal ideation      X2   18.0  adj p 0.0020  SIDS +0.024 pts  ESSD +0.175  somatic FALSE
+
+Largest effect: 4 Low energy at -0.064 item-score points (ESSD -0.105).
+Every one of these is statistically unambiguous and small. At n = 5,068 a
+test of exact equality answers a question nobody asked; the size is the
+answer, and none of these items shifts an expected score by a third of a
+point. 06 puts the matching false-positive rate beside them.
+
+
+=== 3. A second procedure: ordinal logistic regression DIF (lordif) ===
+Different estimator, different test, its own iterative purification. Run
+so that agreement is evidence rather than one method restating itself.
+
+ (mirt) | Iteration: 1, 5 items flagged for DIF (4,5,7,8,9)
+ (mirt) | Iteration: 2, 6 items flagged for DIF (3,4,5,7,8,9)
+ (mirt) | Iteration: 3, 6 items flagged for DIF (2,3,4,5,8,9)
+ (mirt) | Iteration: 4, 7 items flagged for DIF (2,3,4,5,6,8,9)
+ (mirt) | Iteration: 5, 6 items flagged for DIF (2,3,4,5,6,9)
+ (mirt) | Iteration: 6, 6 items flagged for DIF (2,3,4,5,6,9)
+                     item chi_uniform flag
+        1 Little interest      0.0149    .
+         2 Depressed mood      0.0000  DIF
+         3 Sleep problems      0.0000  DIF
+             4 Low energy      0.0000  DIF
+        5 Appetite change      0.0000  DIF
+ 6 Feeling bad about self      0.0000  DIF
+  7 Trouble concentrating      0.0267    .
+     8 Psychomotor change      0.1291    .
+      9 Suicidal ideation      0.0030  DIF
+
+The iteration trace above is lordif purifying its own anchor, and it is
+worth reading: the flagged set oscillates rather than converging, which is
+the same anchor instability section 4 measures deliberately, showing up here
+by itself inside a procedure that is supposed to have solved it.
+
+lordif flags: 6  IRT-LR with purified anchor flags: 5 
+Both procedures: 4 Low energy;  5 Appetite change;  9 Suicidal ideation 
+lordif only:   2 Depressed mood;  3 Sleep problems;  6 Feeling bad about self 
+IRT-LR only:   7 Trouble concentrating;  8 Psychomotor change 
+
+
+=== 4. Anchor sensitivity ===
+DIF is defined relative to the items assumed clean, so the conclusion is a
+function of that assumption. Sweep the anchor size and watch the flag set
+move. This is the known trap in this literature and the reason section 2's
+choice of four is reported as a choice.
+
+ n_anchor      anchor n_flagged     flagged
+        1           2         6 1,4,5,7,8,9
+        2         2,6         6 1,4,5,7,8,9
+        3       2,6,3         6 1,4,5,7,8,9
+        4     2,6,3,1         5   4,5,7,8,9
+        5   2,6,3,1,7         4     4,5,8,9
+        6 2,6,3,1,7,8         3       4,5,9
+
+Flagged at every anchor size tested: 4,5,9 
+(item numbers, per the labels above)
+Items that appear and disappear with the anchor are not findings about the
+PHQ-9. They are findings about the anchor, and reporting them as the former
+is the error this section exists to prevent.
+
+Wrote output/grm_dif.rds
+
+NOTE: a DIF result without its error rate is half a finding. 06 is the
+other half and this stage should not be read without it.

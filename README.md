@@ -167,6 +167,131 @@ alone (Wu and Estabrook 2016), the same shift gives a rise of 206 on 18 df and a
 statistic of 226 against 9 for the runner up. The WLSMV verdict for sex went from "passes"
 to "fails" once the model was identified correctly.
 
+## The IRT extension: DIF by sex, and what the DIF test's own error rate is
+
+The CFA above asks a global question: does constraining all nine items across sex degrade
+fit. `05_grm_dif.R` fits a graded response model and asks a narrower one, item by item:
+holding latent depression fixed, do women and men differ in their probability of endorsing
+this item. That is the question the DIF literature actually asks, and unlike the CFA it
+returns an effect size in raw item-score points, which at n = 5,068 is the only part of the
+output carrying information.
+
+**Five items flag, and every effect is small.** Against a purified four-item anchor
+(items 1, 2, 3, 6), items 4, 5, 7, 8 and 9 flag after Benjamini-Hochberg correction. The
+largest effect is item 4 ("little energy") at **-0.064 item-score points**, meaning that at
+equal true depression a woman scores 0.064 points lower on a 0 to 3 item than a man. Item 5
+(appetite) is -0.050. Both negative effects are somatic items. No item shifts an expected
+score by even a tenth of a point.
+
+**Which items flag depends on the anchor, and that is reported rather than hidden.** DIF is
+defined relative to the items you assume clean. The all-other-item default flags 6 of 9.
+Sweeping the anchor size from 1 to 6 moves the flagged set from six items to three:
+
+| anchor size | items flagged |
+|---|---|
+| 1 to 3 | 1, 4, 5, 7, 8, 9 |
+| 4 | 4, 5, 7, 8, 9 |
+| 5 | 4, 5, 8, 9 |
+| 6 | 4, 5, 9 |
+
+Only **items 4, 5 and 9 survive every anchor size**. Those are the result; the rest are
+findings about the anchor. A second, structurally different procedure (`lordif`, ordinal
+logistic regression with its own iterative purification) flags 6 items, agreeing on 4, 5
+and 9 — and its purification trace visibly oscillates rather than converging, which is the
+same instability showing up inside a method that is supposed to have solved it.
+
+### The error rate, which is the actual point
+
+`06_dif_error_rate.R` measures what the procedure does when the answer is known. This is the
+half that most DIF papers skip, and it changes how the section above should be read.
+
+**Null, 30 random splits of the same respondents.** Nothing distinguishes two coin-flip
+groups, so every flag is an error. All three procedures come in **under** nominal:
+
+| procedure | false positives per item test | splits reporting at least one |
+|---|---|---|
+| all-other-item anchor | 0.004 (0.1x nominal) | 3% |
+| purified 4-item anchor | 0.013 (0.3x nominal) | 7% |
+| lordif | 0.022 (0.4x nominal) | 17% |
+
+Benjamini-Hochberg across nine tests is strict, so the procedures are conservative, not
+liberal. Adding a real 0.19 SD group difference in true depression with no item bias at all
+does not change that (0.000, 0.000, 0.033).
+
+**This is where the first draft of the analysis was wrong.** Seeing 6 of 9 items flag under
+the default anchor, `05` originally explained it as anchor contamination and left it there.
+The null runs above cannot support that explanation: they contain no real DIF, so there is
+nothing available to contaminate an anchor with, and both procedures look fine. A control has
+to contain the thing it is meant to control for. Section 4 of `06` is the condition that
+actually tests the claim.
+
+![Anchor contamination](output/fig5_anchor_contamination.png)
+
+**Contamination, planting bias on a growing number of items.** False-positive rate on the
+items where nothing was planted, at a 0.4 logit shift, 20 replications per condition:
+
+| items carrying real bias | all-other anchor | purified anchor | lordif |
+|---|---|---|---|
+| 0 | 0.006 | 0.000 | 0.033 |
+| 1 | 0.175 | 0.088 | 0.094 |
+| 2 | 0.429 | 0.100 | 0.279 |
+| 3 | 0.575 | 0.167 | 0.467 |
+| 4 | **0.870** | **0.267** | **0.900** |
+
+The default anchor's false-positive rate on innocent items rises from 0.006 to 0.870 as four
+of nine items acquire real bias. The purified anchor rises to 0.267. That slope, not the
+level, is the contamination, and it only appears in the one condition that contains real DIF.
+Purification is not free either: with four guilty items, an average of 1.2 of them ended up
+inside the anchor set, where they are never tested and are instead defining the scale every
+other item is judged against.
+
+![Detection curve](output/fig4_detection_curve.png)
+
+**Planted, detection as a function of effect size.** Sweeping the shift rather than picking
+one convenient size turns "I validated it" into a statement about limits. The 80% detection
+thresholds:
+
+| procedure | 80% detection at | in item-score points |
+|---|---|---|
+| all-other-item anchor | 0.20 logits | 0.057 |
+| purified 4-item anchor | 0.19 logits | 0.054 |
+| lordif | 0.17 logits | 0.045 |
+
+**Read that against the finding.** The largest real sex effect in this data is 0.064
+item-score points. The procedure that found it needs 0.054 points for 80% power. The real
+effect clears the floor, but only just, and every other flagged item sits below or near it.
+That is a substantially weaker claim than "five items show DIF across sex", and it is the
+claim the evidence supports.
+
+### IRT against CFA
+
+`07_compare.R` puts the two methods side by side. Nothing is refit; everything is read from
+the saved output of the earlier stages.
+
+| item | somatic | CFA score stat | CFA rank | IRT chi-square | IRT rank | IRT | SIDS |
+|---|---|---|---|---|---|---|---|
+| 1 Little interest | | 28.4 | 5 | | | anchor | |
+| 2 Depressed mood | | 21.9 | 8 | | | anchor | |
+| 3 Sleep problems | yes | 50.1 | 3 | | | anchor | |
+| 4 Low energy | yes | 140.8 | 1 | 20.1 | 2 | **DIF** | -0.064 |
+| 5 Appetite change | yes | 58.1 | 2 | 30.5 | 1 | **DIF** | -0.050 |
+| 6 Feeling bad about self | | 24.0 | 7 | | | anchor | |
+| 7 Trouble concentrating | | 9.8 | 9 | 15.6 | 5 | **DIF** | +0.010 |
+| 8 Psychomotor change | yes | 27.5 | 6 | 16.5 | 4 | **DIF** | +0.041 |
+| 9 Suicidal ideation | | 34.1 | 4 | 18.0 | 3 | **DIF** | +0.024 |
+
+The CFA released item 4 alone to reach partial scalar invariance; the IRT test flags item 4
+too. Over the five items the IRT side actually tested the two rankings correlate at
+Spearman +0.90, which with five points is descriptive rather than a test and is labelled that
+way. The somatic reading holds under both: the CFA's mean score statistic is 69.1 for somatic
+items against 23.6 for the rest, and both items whose bias runs against women (items 4 and 5)
+are somatic.
+
+Item 7 is the one genuine disagreement worth noting: it ranks last of nine on the CFA and
+fifth on the IRT test, and its effect size is +0.010 points, the smallest in the table. It is
+the kind of item that appears in a flagged list because n is large, not because anything is
+wrong with it.
+
 ## Running it
 
 ```bash
@@ -174,9 +299,15 @@ to "fails" once the model was identified correctly.
 RSCRIPT=/usr/local/bin/Rscript ./run_all.sh
 ```
 
-R 4.5.1 with `lavaan`, `psych`, `survey`, `haven`, `dplyr`, `ggplot2`, `tidyr`. About 90
-seconds end to end; it fits roughly 130 models. `Rscript tests.R` alone runs the six
-assert-based tests. Raw XPT files are gitignored and refetched by `00_download.R`.
+R 4.5.1 with `lavaan`, `psych`, `survey`, `haven`, `dplyr`, `ggplot2`, `tidyr`, and for the
+IRT stages `mirt` and `lordif`. Stages 00 to 04 take about 90 seconds and fit roughly 130
+models. Stage 06 is the slow one: roughly 350 multigroup graded response models, about 12
+minutes on 10 cores, and it honours `N_SPLITS`, `N_REPS` and `N_CORES` if you want a smoke
+run. `Rscript tests.R` alone runs the ten assert-based tests in about 20 seconds. Raw XPT
+files are gitignored and refetched by `00_download.R`.
+
+On macOS the `mirt` binary may fail to load with a `libtbb` symbol error coming from `qs2`;
+`install.packages("qs2", type = "source")` fixes it.
 
 ```
 R/invariance.R           all the logic: recode, model specs, invariance sequence,
@@ -186,6 +317,13 @@ R/invariance.R           all the logic: recode, model specs, invariance sequence
 02_invariance.R          the sequence, partial invariance, the consequence, weighted gap
 03_negative_control.R    random splits, planted non-invariance, parameter recovery
 04_report.R              three figures and three CSV tables
+R/grm.R                  the IRT logic: GRM fits, anchored and all-other DIF tests,
+                         anchor purification, expected-score effect sizes, simulator
+05_grm_dif.R             graded response model, DIF by sex, anchor sensitivity, lordif
+06_dif_error_rate.R      the error rate: null splits, impact-only null, contamination
+                         by number of biased items, detection curve across effect sizes
+07_compare.R             IRT against CFA, read from saved output, nothing refit
+08_dif_figures.R         two figures and three CSV tables for the IRT stages
 tests.R                  assert-based tests
 output/                  figures, tables, and the full logs of every script
 ```
@@ -211,6 +349,18 @@ output/                  figures, tables, and the full logs of every script
   literature is reassuring, not confirmatory.
 - **Sex is the NHANES `RIAGENDR` binary.** It is what the file contains; it is not a
   measure of gender.
+- **The DIF flags sit close to the detection floor.** The largest real effect (0.064
+  item-score points) barely clears the 0.054 needed for 80% power. Items 7, 8 and 9 have
+  effects at or below the floor, so their flags should be read as "this procedure cannot
+  resolve an effect this small reliably", not as findings.
+- **The contamination result is about this instrument's geometry.** Nine items, four
+  categories, these discriminations. The 0.006 to 0.870 slope should not be quoted as a
+  general property of all-other-item anchors on other scales.
+- **The anchor is chosen statistically, not substantively.** A content-based argument for
+  which PHQ-9 items are clean across sex would beat any purification rule, and would turn
+  the anchor sweep from a result into a sensitivity check.
+- **The IRT stages are unweighted too**, for the same reason and with the same limitation as
+  the CFA.
 
 ## References
 
@@ -218,3 +368,8 @@ output/                  figures, tables, and the full logs of every script
 - Chen (2007), *Structural Equation Modeling* 14(3): the 0.015 delta RMSEA cutoff.
 - Wu and Estabrook (2016), *Psychometrika* 81: identification of invariance models for
   ordered categorical indicators.
+- Samejima (1969): the graded response model.
+- Woods (2009), *Applied Psychological Measurement* 33: rank-based anchor selection for DIF.
+- Choi, Gibbons and Crane (2011), *Journal of Statistical Software* 39: `lordif`.
+- Meade (2010), *Journal of Applied Psychology* 95: expected-score DIF effect sizes (SIDS,
+  ESSD).

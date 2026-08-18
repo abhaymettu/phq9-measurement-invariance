@@ -156,4 +156,128 @@ local({
   ok("ordinal_thresholds_are_testable")
 })
 
+# ---------------------------------------------------------------------------
+# IRT extension. These are slower than the rest (each one fits several
+# multigroup GRMs), so they are skipped unless the mirt side is actually
+# installed, and they run on small simulations rather than the real file.
+if (requireNamespace("mirt", quietly = TRUE)) {
+  source("R/grm.R")
+
+  # -------------------------------------------------------------------------
+  # The simulator has to actually plant what it claims to plant. Everything
+  # downstream is measured against this, so if the shift is not real, or points
+  # the wrong way, the power curve in 06 is measuring nothing and would still
+  # look plausible.
+  local({
+    set.seed(101)
+    pars <- list(a = setNames(rep(2, 9), PHQ_ITEMS),
+                 b = matrix(c(0.5, 1.3, 2.0), nrow = 9, ncol = 3, byrow = TRUE,
+                            dimnames = list(PHQ_ITEMS, c("b1", "b2", "b3"))))
+    s0 <- sim_grm(pars, 4000, shift = 0, bad_item = 5, mean_diff = 0)
+    m0 <- tapply(s0$resp[[PHQ_ITEMS[5]]], s0$group, mean)
+    check(abs(m0[["A"]] - m0[["B"]]) < 0.05,
+          paste("shift 0 must generate no difference; got", round(m0[["A"]] - m0[["B"]], 3)))
+
+    s1 <- sim_grm(pars, 4000, shift = 0.8, bad_item = 5, mean_diff = 0)
+    m1 <- tapply(s1$resp[[PHQ_ITEMS[5]]], s1$group, mean)
+    # Positive shift raises the thresholds in group B: B needs more trait to
+    # endorse, so B must score LOWER on that item. A sign error here would
+    # invert the whole planted-effect story and still produce a power curve.
+    check(m1[["B"]] < m1[["A"]] - 0.05,
+          paste("positive shift must lower the focal group's item score; got A",
+                round(m1[["A"]], 3), "B", round(m1[["B"]], 3)))
+
+    # And it must be confined to the item named. If the shift leaked into other
+    # items the null items would carry real DIF and the false-positive rate in
+    # 06 would be measuring a bug in the simulator instead of the procedure.
+    other <- setdiff(seq_len(9), 5)
+    leak <- max(vapply(other, function(j) {
+      mm <- tapply(s1$resp[[PHQ_ITEMS[j]]], s1$group, mean); abs(mm[[1]] - mm[[2]])
+    }, numeric(1)))
+    check(leak < 0.05, paste("shift leaked into a clean item, max gap", round(leak, 3)))
+
+    # Multi-item planting is what the contamination condition in 06 rests on.
+    # It has to move exactly the named items and no others, or that section is
+    # measuring the simulator.
+    s2 <- sim_grm(pars, 4000, shift = 0.8, bad_item = c(2, 5, 7), mean_diff = 0)
+    gaps <- vapply(seq_len(9), function(j) {
+      mm <- tapply(s2$resp[[PHQ_ITEMS[j]]], s2$group, mean); mm[["A"]] - mm[["B"]]
+    }, numeric(1))
+    check(all(gaps[c(2, 5, 7)] > 0.05),
+          paste("all three planted items must move; got", paste(round(gaps[c(2,5,7)], 3), collapse = " ")))
+    check(max(abs(gaps[-c(2, 5, 7)])) < 0.05,
+          paste("multi-item shift leaked; max clean gap", round(max(abs(gaps[-c(2,5,7)])), 3)))
+    ok("sim_grm_plants_what_it_claims")
+  })
+
+  # -------------------------------------------------------------------------
+  # The DIF test must bite. Reintroducing the defect it is supposed to catch,
+  # a real item shift, has to make it fail; and with nothing planted it has to
+  # stay quiet. A test that only checked "returns nine rows" would pass on a
+  # procedure that flagged everything or nothing.
+  local({
+    set.seed(102)
+    pars <- list(a = setNames(rep(2, 9), PHQ_ITEMS),
+                 b = matrix(c(0.5, 1.3, 2.0), nrow = 9, ncol = 3, byrow = TRUE,
+                            dimnames = list(PHQ_ITEMS, c("b1", "b2", "b3"))))
+    anch <- PHQ_ITEMS[c(1, 2, 6, 7)]
+
+    s <- sim_grm(pars, 2000, shift = 0.8, bad_item = 5, mean_diff = 0)
+    d <- grm_dif(s$resp, s$group, anchors = anch)
+    check(nrow(d) == 9, "grm_dif must return one row per item, anchors included")
+    check(all(is.na(d$X2[d$anchor])), "anchors are not tested and must be NA")
+    check(isTRUE(d$flag[5]), "the planted item must flag")
+    check(d$X2[5] > 3 * max(d$X2[-5], na.rm = TRUE),
+          paste("planted item should dominate; got", round(d$X2[5], 1), "vs",
+                round(max(d$X2[-5], na.rm = TRUE), 1)))
+
+    s0 <- sim_grm(pars, 2000, shift = 0, bad_item = 5, mean_diff = 0)
+    d0 <- grm_dif(s0$resp, s0$group, anchors = anch)
+    check(!any(d0$flag), paste("nothing planted, but flagged:",
+                               paste(d0$item[d0$flag], collapse = " ")))
+    ok("grm_dif_bites_and_stays_quiet")
+  })
+
+  # -------------------------------------------------------------------------
+  # Purification exists to keep a contaminated item out of the anchor. Test
+  # that property directly: plant DIF, and the guilty item must not end up
+  # being the thing that defines the common scale.
+  local({
+    set.seed(103)
+    pars <- list(a = setNames(rep(2, 9), PHQ_ITEMS),
+                 b = matrix(c(0.5, 1.3, 2.0), nrow = 9, ncol = 3, byrow = TRUE,
+                            dimnames = list(PHQ_ITEMS, c("b1", "b2", "b3"))))
+    s <- sim_grm(pars, 2000, shift = 0.8, bad_item = 3, mean_diff = 0)
+    a <- purify_anchors(s$resp, s$group, n_anchor = 4)
+    check(length(a) == 4, "purify_anchors must return the requested size")
+    check(!PHQ_ITEMS[3] %in% a,
+          paste("the planted item must be kept out of the anchor; got",
+                paste(a, collapse = " ")))
+    ok("purify_anchors_excludes_the_guilty_item")
+  })
+
+  # -------------------------------------------------------------------------
+  # The effect size has to move with the size of the shift, and carry its sign.
+  # A magnitude that did not scale would make "the size at which detection
+  # reaches 80%" unreportable in item-score points.
+  local({
+    set.seed(104)
+    pars <- list(a = setNames(rep(2, 9), PHQ_ITEMS),
+                 b = matrix(c(0.5, 1.3, 2.0), nrow = 9, ncol = 3, byrow = TRUE,
+                            dimnames = list(PHQ_ITEMS, c("b1", "b2", "b3"))))
+    anch <- PHQ_ITEMS[-5]
+    es <- vapply(c(0.3, 0.9), function(sh) {
+      s <- sim_grm(pars, 3000, shift = sh, bad_item = 5, mean_diff = 0)
+      dif_effect_size(grm_fit(s$resp, s$group, anchors = anch), PHQ_ITEMS)$SIDS[5]
+    }, numeric(1))
+    check(all(es < 0), paste("a positive threshold shift must give a negative SIDS; got",
+                             paste(round(es, 3), collapse = " ")))
+    check(es[2] < es[1], paste("a bigger shift must give a bigger effect; got",
+                               paste(round(es, 3), collapse = " ")))
+    ok("effect_size_scales_with_the_shift")
+  })
+} else {
+  cat("skip irt_tests (mirt not installed)\n")
+}
+
 cat("\nall tests passed\n")

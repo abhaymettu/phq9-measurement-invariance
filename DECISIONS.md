@@ -109,3 +109,66 @@ the sign of the entire decomposition, which is how the bug was found: the model 
 were 0.19 SD lower on latent depression while the observed sum score said they were 0.93
 points higher. `decompose_gap` resolves identity through `lavInspect(fit, "group.label")`
 and a test shuffles the rows to prove the answer does not move.
+
+## The IRT extension: why a second method at all
+
+The CFA already answers "is this instrument invariant across sex". The IRT stage answers a
+narrower question the CFA cannot: holding the trait fixed, how many raw points of a 0 to 3
+item do the two groups differ by. That effect size, not another p-value, is what the CFA side
+was missing, and at n = 5,068 it is the only part of the output that carries information. The
+two methods are kept side by side in 07 rather than one replacing the other.
+
+**What would change my mind:** if the two rankings had disagreed sharply, the interesting
+report would be the disagreement and I would have led with it. They agree on item 4, so the
+comparison is a robustness check rather than the finding.
+
+## Anchor choice is reported as a choice, not defended as correct
+
+DIF is defined relative to the items assumed clean, so every DIF result is conditional on an
+anchor and most papers never say which. The all-other-item default flags 6 of 9 items here.
+The purified rank-based anchor of 4 items (Woods 2009) flags 5. Sweeping the anchor size from
+1 to 6 moves the flagged set from six items down to three, and only items 4, 5 and 9 survive
+every anchor size. Those three are what 05 reports as stable; the rest are reported as
+anchor-dependent, which is what they are.
+
+**What would change my mind:** an anchor set justified by content rather than by statistics.
+If there were a substantive reason to believe specific items are clean across sex, that would
+beat any purification rule, and the sweep would become a sensitivity analysis rather than the
+result.
+
+## The contamination claim had to be tested, not asserted
+
+The first version of 05 explained 6-of-9 flagging as anchor contamination and left it there.
+The null runs in 06 then showed both procedures are *conservative* when there is no DIF: 0.004
+and 0.013 false positives per item test against a nominal 0.05, because Benjamini-Hochberg
+across nine tests is strict. So the random-split control cannot support the contamination
+story at all. It contains no real DIF, and there is nothing to contaminate an anchor with.
+
+Section 4 of 06 exists because of that gap. Planting DIF on a growing number of items and
+watching the false-alarm rate on the innocent ones is the condition that actually tests the
+claim, and it is the only place the two anchor strategies separate. This is the same failure
+mode the covary work cost eight rounds to learn: a check that passes for a reason unrelated to
+the property it is named after.
+
+## Detection floor reported in item-score points, not logits
+
+"The procedure has 80% power at 0.19 logits" is unreadable. Every threshold is converted to
+the same expected-score effect size 05 reports in, using a large simulated sample so the
+conversion reflects the model rather than sampling noise. That conversion is what lets the
+central comparison be made at all: the largest real sex effect in this data sits just above
+the floor, which is a much weaker statement than "five items show DIF" and is the honest one.
+
+## Unweighted here too, for the same reason as the CFA
+
+Same argument as the unweighted CFA above, and the same limitation. Item parameters are
+properties of the instrument; the population quantity that the bias contaminates is reported
+with MEC weights in 02.
+
+## Every DIF flag is reported with the anchor it depends on
+
+The single most repeated failure in this literature is a flagged-item list with no anchor
+named. Item 7 flags here and ranks last of nine on the CFA, with an effect of +0.010
+item-score points. It is in the output because n is large, and it is labelled that way rather
+than dropped, because dropping it would be a specification search and reporting it plainly
+would be a false finding. Only items 4, 5 and 9 survive every anchor size and only those are
+described as the result.

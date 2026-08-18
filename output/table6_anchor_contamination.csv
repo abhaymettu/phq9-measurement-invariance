@@ -1,0 +1,16 @@
+"n_bad","procedure","false_alarm_rate","guilty_in_anchor"
+0,"all_other",0.00555555555555556,NA
+1,"all_other",0.175,NA
+2,"all_other",0.428571428571429,NA
+3,"all_other",0.575,NA
+4,"all_other",0.87,NA
+0,"anchored",0,NA
+1,"anchored",0.0875,0
+2,"anchored",0.1,0
+3,"anchored",0.166666666666667,0.25
+4,"anchored",0.266666666666667,1.2
+0,"lordif",0.0333333333333333,NA
+1,"lordif",0.09375,NA
+2,"lordif",0.278571428571429,NA
+3,"lordif",0.466666666666667,NA
+4,"lordif",0.9,NA
