@@ -4,3 +4,8 @@ data/
 .RData
 __pycache__/
 .DS_Store
+
+# Private working notes: names third parties, deadlines and personal plans.
+# Never belongs in a public repo.
+HANDOFF.md
+HANDOFF*.md
