@@ -3,29 +3,48 @@
 Every study that compares a depression score between groups assumes the questionnaire
 measures the same construct, on the same scale, in both. That assumption is called scalar
 measurement invariance, it is testable, and it is usually not tested. This repo tests it on
-the nine PHQ-9 items in NHANES 2017-2018 and then quantifies what the failure costs a naive
-group comparison.
+the nine PHQ-9 items in NHANES 2017-2018 and then quantifies what any departure from it costs
+a naive group comparison.
 
-**Headline: the PHQ-9 fails scalar invariance across sex, and one somatic item is
-responsible.** Forcing the item thresholds equal for women and men drops CFI by 0.0130 under
-WLSMV and 0.0158 under MLR, both past the conventional 0.010 cutoff. Item 4, "feeling tired
-or having little energy", is the single worst offender under both estimators. About **11% of
-the observed female-male gap in PHQ-9 sum scores is measurement, not symptoms**: of the
-+0.87 point model-implied gap, +0.77 points is a real latent difference and +0.10 points is
-items behaving differently. A paper that assumed invariance would report a sex difference of
-0.21 SD where the partially invariant model says 0.19 SD, an overstatement of about 10%.
+**Headline (corrected 2026-10-30): the PHQ-9 is close to scalar invariant across sex, not
+exactly invariant, and three items carry small sex differences.** The first version of this
+README said the PHQ-9 fails scalar invariance across sex. That came from an ordinal scalar
+model that fixed both groups' latent means at zero; see [What changed](#what-changed-on-2026-10-30).
+
+- **Ordinal model (WLSMV, the primary specification), latent means free at the scalar step:**
+  change in CFI +0.0029, inside the conventional 0.010 cutoff. Exact invariance is still
+  rejected (scaled chi-square difference 32.2 on 8 df, p = 8.5e-05).
+- **Which items:** items 4 ("feeling tired or having little energy"), 5 (appetite) and 9
+  (suicidal ideation) flag for sex DIF at every anchor size and under every local-dependence
+  remedy that tests them (IRT section below). Every effect is small: at baseline none moves
+  an expected item score by a tenth of a point, and item 4 reaches about 0.10 points only
+  under the local-dependence remedies.
+- **What it costs:** freeing those items' thresholds and loadings shrinks the latent sex
+  gap by about 5% to 20%, depending on which items are freed (0.490 SD to 0.466 with item 4
+  alone, 0.410 with items 4, 5 and 9, 0.393 with item 8 added).
+- **Continuous model (MLR), the common shortcut:** scalar still fails (change in CFI
+  -0.0158), and a simulation with the real latent mean and variance gap and no item bias
+  does not reproduce that failure (-0.0028). Under the partially invariant MLR model about
+  11% of the female-male gap in PHQ-9 sum scores is measurement: of the +0.87 point
+  model-implied gap, +0.77 points is latent difference and +0.10 points is items behaving
+  differently, which sits inside the 5% to 20% range above.
 
 Age band and race/ethnicity are the useful contrast. Across age (18-49 vs 50+) invariance
 holds under both estimators. Across race/ethnicity (6 groups) the verdict **flips with the
-estimator**: it holds under WLSMV (delta CFI -0.0069) and fails under MLR (-0.0148). If you
-only ever ran the common shortcut of treating four-category Likert items as continuous, you
-would publish the opposite conclusion about race that you would publish about sex.
+estimator**: it holds under WLSMV (delta CFI -0.0069) and fails under MLR (-0.0148). These
+race and age numbers come from the original specification with latent means fixed, which
+can only make the ordinal test stricter, so the passes stand. Sex now shows the same split
+as race: the choice to treat four-category Likert items as continuous is, on its own, enough
+to turn an approximate pass into a fail.
 
 ![Invariance verdict](output/fig1_invariance_verdict.png)
 
 The green band is the negative control: the full range of delta CFI across 30 random group
 splits of the same respondents, where by construction there is nothing to find. The sex bars
-sit outside it; the age bars sit inside it.
+sit outside it; the age bars sit inside it. The figure still shows the original ordinal scalar
+step with latent means fixed, so its WLSMV sex bar is the -0.0130 that the corrected model
+replaces with +0.0029. The random splits have no latent mean difference, which is why this
+control could not catch the problem.
 
 ## Data
 
@@ -165,7 +184,25 @@ chi-square rise of 9 on 9 df and a score statistic of 5 for the guilty item, ind
 from noise. After fixing the intercepts at zero so location is carried by the thresholds
 alone (Wu and Estabrook 2016), the same shift gives a rise of 206 on 18 df and a score
 statistic of 226 against 9 for the runner up. The WLSMV verdict for sex went from "passes"
-to "fails" once the model was identified correctly.
+to "fails" after that fix.
+
+### What changed on 2026-10-30
+
+The fix above was incomplete. Fixing the latent response intercepts at zero is right, but the
+scalar model also kept the women's and men's latent means fixed at zero, so the test required
+no real sex difference in depression as well as equal thresholds. Women score higher, so it
+failed partly for that reason. None of the controls above had a latent mean difference, so
+none could catch it. A planted-mean control with this data's parameters and no item bias at
+all fails the original test in 4 of 5 runs (mean change in CFI -0.0118, against -0.0130 on
+the real data).
+
+Identified as Wu and Estabrook (2016) describe, with latent means and variances free at the
+scalar step, the ordinal model meets the approximate-fit cutoff (+0.0029 one factor, +0.0018
+with a cognitive/somatic two-factor model). That holds under delta and theta
+parameterisation, with and without survey weights, and under a Millsap-Tein identification.
+The positive change is partly a property of scaled fit statistics (unscaled CFI moves
+-0.0010), and the scaled chi-square difference rejects exact invariance, which is why the
+headline says close to invariant rather than invariant.
 
 ## The IRT extension: DIF by sex, and what the DIF test's own error rate is
 
@@ -477,6 +514,11 @@ output/                  figures, tables, and the full logs of every script
 - **The Q3 check is weak against small dependence.** Planting a second factor at loading 0.5
   put only 10% of replications past the null's 95th percentile. Absence of a flag here is not
   evidence of conditional independence, only of dependence below what this design resolves.
+- **The corrected ordinal results are not yet produced by the scripts here.** As of
+  2026-10-30, `02_invariance.R`, `03_negative_control.R` and figure 1 still use the scalar
+  model with latent means fixed. The numbers in the corrected headline and in What changed
+  come from a re-run of this repo's data and code with the means freed; updating the
+  scripts to match is the next change.
 - **Item 3's DIF is found by a procedure chosen after seeing the Q3 result.** It is reported
   because it illustrates the anchor problem, not as an independently established finding.
 
