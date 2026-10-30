@@ -84,6 +84,21 @@ CFA_MODEL <- paste("dep =~", paste(PHQ_ITEMS, collapse = " + "))
 # indistinguishable from noise. After it, the same shift gives a rise of 133 on
 # 18 df and the guilty item's score statistic is 134 against 9 for the runner up.
 # Location must be carried by the thresholds alone (Wu and Estabrook 2016).
+#
+# That fix alone was not enough, and the first published headline rested on the
+# gap. With the intercepts fixed and thresholds constrained, lavaan also keeps
+# every group's latent mean at zero, so the scalar test asked two questions at
+# once: are the thresholds equal, and is there no real group difference in
+# depression? Women score higher, so it failed partly for the second reason.
+# None of the controls had a latent mean difference, so none could see it.
+# Corrected 2026-10-30: the ordinal scalar rung also lists "intercepts" in
+# group.equal. The latent response intercepts are already fixed at zero above,
+# so that constrains nothing new, but it is lavaan's signal to free the latent
+# means in every group but the first, which is what the continuous scalar
+# model already does by default. The resulting model is the Wu and Estabrook
+# (2016) scalar model exactly (same chi-square and df as we2016_sequence below).
+# 03_negative_control.R now includes a planted-mean control that fails the old
+# specification and passes this one.
 CFA_MODEL_ORDINAL <- paste(c(CFA_MODEL, paste0(PHQ_ITEMS, " ~ 0*1")), collapse = "\n")
 
 #' Fit the one-factor CFA, either ordinal (WLSMV) or continuous (MLR).
@@ -132,11 +147,17 @@ fit_table <- function(fits) {
 }
 
 #' Configural, metric, scalar for a given grouping variable.
-invariance_sequence <- function(dat, group, ordinal = TRUE, partial = NULL) {
+#'
+#' For the ordinal model the scalar rung frees the latent means (see the note
+#' on CFA_MODEL_ORDINAL). `free_means = FALSE` reproduces the original,
+#' incorrect specification and exists only so the planted-mean control in
+#' 03_negative_control.R can show what it did.
+invariance_sequence <- function(dat, group, ordinal = TRUE, partial = NULL,
+                                free_means = TRUE) {
   rungs <- if (ordinal) {
     list(configural = NULL,
          metric     = c("loadings"),
-         scalar     = c("loadings", "thresholds"))
+         scalar     = c("loadings", "thresholds", if (free_means) "intercepts"))
   } else {
     list(configural = NULL,
          metric     = c("loadings"),
@@ -144,6 +165,34 @@ invariance_sequence <- function(dat, group, ordinal = TRUE, partial = NULL) {
   }
   lapply(rungs, function(eq)
     fit_cfa(dat, group = group, equal = eq, ordinal = ordinal, partial = partial))
+}
+
+#' The Wu and Estabrook (2016) sequence for ordered indicators, built by
+#' semTools::measEq.syntax: configural, thresholds, thresholds plus loadings,
+#' then intercepts (which is where the latent means are freed). Delta
+#' parameterisation. Reported beside the main sequence as a second
+#' identification of the same question.
+we2016_sequence <- function(dat, group, partial = NULL) {
+  steps <- list(configural = "", thresholds = "thresholds",
+                metric = c("thresholds", "loadings"),
+                scalar = c("thresholds", "loadings", "intercepts"))
+  lapply(steps, function(eq) {
+    syn <- semTools::measEq.syntax(
+      configural.model = CFA_MODEL, data = dat, group = group, ordered = PHQ_ITEMS,
+      parameterization = "delta", ID.fac = "std.lv", ID.cat = "Wu.Estabrook.2016",
+      group.equal = eq, group.partial = if (identical(eq, steps$scalar)) partial,
+      return.fit = FALSE)
+    suppressWarnings(lavaan::cfa(as.character(syn), data = dat, group = group,
+                                 ordered = PHQ_ITEMS, estimator = "WLSMV",
+                                 parameterization = "delta"))
+  })
+}
+
+#' Latent mean of every group after the first, from a fitted model.
+latent_means <- function(fit) {
+  pe <- parameterEstimates(fit)
+  x <- pe[pe$op == "~1" & pe$lhs == "dep", ]
+  setNames(x$est, lavInspect(fit, "group.label")[x$group])
 }
 
 # ---------------------------------------------------------------------------

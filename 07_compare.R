@@ -63,13 +63,14 @@ print(cmp, row.names = FALSE)
 
 # ---------------------------------------------------------------------------
 cat("\n=== Agreement ===\n")
-# The CFA released exactly one item to reach partial scalar invariance; that is
-# its verdict, not the whole ranking.
+# The items the ordinal CFA released to reach partial scalar invariance are its
+# verdict, not the whole ranking. Since the 2026-10-30 correction (latent means
+# free at the scalar step) the ordinal scalar model passes without releasing
+# any item, so the CFA side of the agreement is the ranking alone.
 cfa_released <- inv$freed$WLSMV
-if (!is.null(cfa_released)) {
-  cat("CFA released to reach partial invariance:",
-      paste(PHQ_LABELS[cfa_released], collapse = ";  "), "\n")
-}
+cat("CFA released to reach partial invariance:",
+    if (length(cfa_released)) paste(PHQ_LABELS[cfa_released], collapse = ";  ")
+    else "none (full scalar passes)", "\n")
 irt_flag <- irt$item[which(irt$flag)]
 cat("IRT flagged (purified anchor):     ", paste(PHQ_LABELS[irt_flag], collapse = ";  "), "\n")
 cat("IRT flagged at every anchor size:  ", paste(grm$stable_flags, collapse = ","),

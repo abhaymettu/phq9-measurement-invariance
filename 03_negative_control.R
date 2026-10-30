@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Two validation checks. Neither is optional: an invariance pipeline that
+# Validation checks. None is optional: an invariance pipeline that
 # rejects invariance across a coin flip proves nothing about sex, and a
 # pipeline that cannot find a non-invariance you planted proves nothing either.
 #
@@ -10,6 +10,11 @@
 # 2 Simulated known non-invariance. Generate ordinal data from a one-factor
 #   model with one item's thresholds deliberately shifted in group 2, and check
 #   the procedure both rejects scalar invariance and points at the right item.
+# 3 Planted latent mean difference, no item bias at all. Added 2026-10-30. The
+#   two controls above have no real group difference in the trait, so they
+#   could not tell a test of equal thresholds from a test of equal means. This
+#   one can, and it is the control that exposed the fixed-mean error in the
+#   original ordinal scalar model.
 
 source("R/invariance.R")
 set.seed(20260729)
@@ -127,9 +132,49 @@ cat("item ranking is noise, as it must be. With a shift the ranking puts the\n")
 cat("planted item first by a wide margin, so the localisation step points at the\n")
 cat("right item rather than scattering blame across the questionnaire.\n")
 
+# ---------------------------------------------------------------------------
+cat("\n=== 3. Planted latent mean difference, no item bias ===\n")
+cat("Identical item parameters in both groups; only the trait mean differs.\n")
+cat("A correct scalar test must pass. The original specification, which kept\n")
+cat("both latent means at zero, is run beside it to show what it did.\n\n")
+set.seed(20261029)
+pm_lambda <- c(.80, .85, .70, .75, .70, .80, .75, .70, .70)
+pm_tau <- cbind(c(.4, .6, .0, -.3, .4, .6, .6, 1.0, 1.8),
+                c(1.3, 1.5, .9, .7, 1.3, 1.4, 1.4, 1.8, 2.4),
+                c(1.8, 2.0, 1.4, 1.3, 1.8, 2.0, 1.9, 2.3, 2.8))
+gen_mean <- function(n, mu) {
+  eta <- rnorm(n, mu)
+  y <- vapply(1:9, function(j)
+    findInterval(pm_lambda[j] * eta + rnorm(n, sd = sqrt(1 - pm_lambda[j]^2)),
+                 pm_tau[j, ]), numeric(n))
+  colnames(y) <- PHQ_ITEMS
+  as.data.frame(y)
+}
+pm_rows <- list()
+for (mu in c(0, 0.5)) {
+  for (r in 1:5) {
+    d <- rbind(cbind(gen_mean(2500, 0), grp = "A"), cbind(gen_mean(2500, mu), grp = "B"))
+    d$grp <- factor(d$grp)
+    for (fm in c(FALSE, TRUE)) {
+      t <- fit_table(invariance_sequence(d, "grp", ordinal = TRUE, free_means = fm))
+      pm_rows[[length(pm_rows) + 1]] <- data.frame(
+        latent_diff = mu, rep = r, spec = if (fm) "means free" else "means fixed (original)",
+        d_cfi = t$d_cfi[3], chisq_rise = t$chisq[3] - t$chisq[2],
+        d_df = t$df[3] - t$df[2], verdict = t$verdict[3])
+    }
+  }
+}
+pm <- do.call(rbind, pm_rows)
+for (mu in unique(pm$latent_diff)) for (sp in unique(pm$spec)) {
+  r <- pm[pm$latent_diff == mu & pm$spec == sp, ]
+  cat(sprintf("latent diff %.1f SD, %-22s scalar dCFI mean %+.4f, worst %+.4f, FAIL %d of %d\n",
+              mu, sp, mean(r$d_cfi), min(r$d_cfi), sum(r$verdict == "FAIL"), nrow(r)))
+}
+out$planted_mean <- pm
+
 # Recovery of a known latent mean difference, to check the consequence
 # decomposition is not inventing the bias it reports.
-cat("\n=== 3. Recovery of a known gap decomposition ===\n")
+cat("\n=== 4. Recovery of a known gap decomposition ===\n")
 cat("Simulate a true latent mean difference of 0.25 SD plus a planted\n")
 cat("intercept shift on item 5, then see whether decompose_gap splits the\n")
 cat("observed sum-score gap the way it was built. 20 replications, because one\n")

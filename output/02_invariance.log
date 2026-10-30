@@ -15,10 +15,10 @@ Standardised loadings (WLSMV):
       9 Suicidal ideation   0.749
 
 === sex, WLSMV (2 groups) ===
-      model chisq df    cfi   rmsea    srmr     d_cfi  d_rmsea verdict
- configural 510.8 54 0.9817 0.05779 0.04487        NA       NA       -
-     metric 378.8 62 0.9873 0.04491 0.04672  0.005607 -0.01288    pass
-     scalar 720.7 80 0.9743 0.05623 0.04944 -0.012969  0.01132    FAIL
+      model chisq df    cfi   rmsea    srmr     d_cfi   d_rmsea verdict
+ configural 510.8 54 0.9817 0.05779 0.04487        NA        NA       -
+     metric 378.8 62 0.9873 0.04491 0.04672  0.005607 -0.012878    pass
+     scalar 449.1 79 0.9852 0.04301 0.04728 -0.002136 -0.001905    pass
 
 === sex, MLR (2 groups) ===
       model chisq df    cfi   rmsea    srmr     d_cfi   d_rmsea verdict
@@ -30,7 +30,7 @@ Standardised loadings (WLSMV):
       model chisq df    cfi   rmsea    srmr     d_cfi   d_rmsea verdict
  configural 555.1 54 0.9803 0.06052 0.04705        NA        NA       -
      metric 431.2 62 0.9855 0.04849 0.05063  0.005184 -0.012038    pass
-     scalar 518.8 80 0.9827 0.04653 0.04894 -0.002737 -0.001952    pass
+     scalar 488.6 79 0.9839 0.04524 0.04925 -0.001588 -0.003244    pass
 
 === age, MLR (2 groups) ===
       model chisq df    cfi   rmsea    srmr      d_cfi    d_rmsea verdict
@@ -42,7 +42,7 @@ Standardised loadings (WLSMV):
       model chisq  df    cfi   rmsea    srmr     d_cfi   d_rmsea verdict
  configural 649.6 162 0.9808 0.05973 0.05679        NA        NA       -
      metric 537.1 202 0.9868 0.04434 0.06542  0.006011 -0.015388    pass
-     scalar 801.2 292 0.9799 0.04546 0.06029 -0.006862  0.001122    pass
+     scalar 650.1 287 0.9857 0.03872 0.06025 -0.001105 -0.005615    pass
 
 === race, MLR (6 groups) ===
       model chisq  df    cfi   rmsea    srmr     d_cfi    d_rmsea verdict
@@ -77,21 +77,50 @@ fits_sex$scalar      < 2.2e-16 ***
 ---
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-=== Localising non-invariance across sex (WLSMV scalar model) ===
-               item_label      X2 somatic
-             4 Low energy 140.806    TRUE
-        5 Appetite change  58.076    TRUE
-         3 Sleep problems  50.064    TRUE
-      9 Suicidal ideation  34.141   FALSE
-        1 Little interest  28.440   FALSE
-     8 Psychomotor change  27.502    TRUE
- 6 Feeling bad about self  24.030   FALSE
-         2 Depressed mood  21.877   FALSE
-  7 Trouble concentrating   9.806   FALSE
+Scaled and Shifted Chi-Squared Difference Test (method = “satorra.2000”)
 
-Releasing constraints one item at a time, worst score statistic first:
-  free 1  item(s), latest [4 Low energy]: dCFI -0.0074  dRMSEA +0.0056  pass
-Partial scalar invariance reached after freeing: 4 Low energy 
+lavaan->lavTestLRT():  
+   lavaan NOTE: The “Chisq” column contains standard test statistics, not the 
+   robust test that should be reported per model. A robust difference test is 
+   a function of two standard (not robust) statistics.
+
+                  Df AIC BIC  Chisq Chisq diff    RMSEA Df diff Pr(>Chisq)    
+fits_sex_o$metric 62         316.48                                           
+fits_sex_o$scalar 79         360.04      96.67 0.024834      17  3.669e-13 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+=== Sex, WLSMV, Wu and Estabrook (2016) sequence (semTools::measEq.syntax) ===
+      model chisq df    cfi   rmsea    srmr     d_cfi   d_rmsea verdict
+ configural 510.8 54 0.9817 0.05779 0.04487        NA        NA       -
+ thresholds 547.4 63 0.9806 0.05510 0.04487 -0.001105 -0.002694    pass
+     metric 514.1 71 0.9823 0.04964 0.04499  0.001653 -0.005457    pass
+     scalar 449.1 79 0.9852 0.04301 0.04728  0.002924 -0.006633    pass
+scaled chi-square difference, metric to scalar: 32.2 on 8 df, p = 8.5e-05
+unscaled CFI change, metric to scalar: -0.0010
+Approximate fit passes; exact scalar invariance is rejected.
+
+Latent mean of men relative to women (women = 0, SD units), freeing items:
+   freed male_mean    cfi shrink_pct
+    none   -0.4901 0.9852      0.000
+       4   -0.4665 0.9854      4.822
+     4+5   -0.4310 0.9857     12.054
+   4+5+9   -0.4100 0.9846     16.353
+ 4+5+8+9   -0.3930 0.9837     19.813
+
+=== Localising non-invariance across sex (WLSMV scalar model) ===
+               item_label     X2 somatic
+        5 Appetite change 21.522    TRUE
+             4 Low energy 19.543    TRUE
+  7 Trouble concentrating 19.287   FALSE
+ 6 Feeling bad about self 13.028   FALSE
+        1 Little interest  9.410   FALSE
+     8 Psychomotor change  9.206    TRUE
+      9 Suicidal ideation  8.354   FALSE
+         3 Sleep problems  8.269    TRUE
+         2 Depressed mood  3.207   FALSE
+
+Full scalar invariance already passes; no constraints released.
 
 === Localising non-invariance across sex (MLR scalar model) ===
                item_label     X2 somatic
@@ -110,7 +139,7 @@ Releasing constraints one item at a time, worst score statistic first:
   free 2  item(s), latest [4 Low energy]: dCFI -0.0081  dRMSEA +0.0004  pass
 Partial scalar invariance reached after freeing: 9 Suicidal ideation, 4 Low energy 
 
-Items flagged by both estimators: 4 Low energy 
+Items released under both estimators: none 
 
 === Consequence for a naive female minus male comparison ===
 observed gap in mean PHQ-9 sum, unweighted:      +0.926 points

@@ -50,8 +50,8 @@ p1 <- ggplot(sc, aes(x = group, y = d_cfi, fill = estimator)) +
   scale_fill_manual(values = PAL) +
   scale_y_continuous(labels = function(x) sprintf("%+.3f", x),
                      expand = expansion(mult = c(0.04, 0.16))) +
-  labs(title = "The PHQ-9 fails scalar invariance across sex, under both estimators",
-       subtitle = "Change in CFI when item thresholds or intercepts are forced equal across groups.\nBars below the dashed line mean group mean comparisons are not on a common scale.",
+  labs(title = "Across sex the scalar verdict depends on treating the items as ordered",
+       subtitle = "Change in CFI when item thresholds or intercepts are forced equal across groups, latent means free.\nBars below the dashed line mean group mean comparisons are not on a common scale.",
        x = NULL, y = "Change in CFI, scalar vs metric", fill = "Estimator",
        caption = paste0("NHANES 2017-2018 depression screener, adults 18+ with all nine items answered, n = ",
                         nrow(s), ". Unweighted CFA.\nWLSMV treats items as ordered with a polychoric basis; MLR treats them as continuous. Cutoff from Cheung and Rensvold (2002).")) +
@@ -73,8 +73,8 @@ p2 <- ggplot(sco, aes(x = X2, y = label, fill = cluster)) +
   geom_col(width = 0.68) +
   facet_wrap(~estimator, scales = "free_x") +
   scale_fill_manual(values = c(Somatic = "#b4553f", `Cognitive-affective` = "#8d99a6")) +
-  labs(title = "Low energy is the item that behaves most differently for women and men",
-       subtitle = "Score (Lagrange multiplier) statistic for each item's cross-group equality constraints\nin the scalar model. Larger means the constraint fits worse. Both estimators put a somatic\nitem first, matching the published pattern of sex differential item functioning on the PHQ-9.",
+  labs(title = "No single item dominates; low energy ranks second under both estimators",
+       subtitle = "Score (Lagrange multiplier) statistic for each item's cross-group equality constraints\nin the scalar model, latent means free. Larger means the constraint fits worse. Under WLSMV\nappetite, low energy and trouble concentrating are close to tied; under MLR suicidal ideation leads.",
        x = "Score statistic on the item's equality constraints", y = NULL, fill = NULL,
        caption = paste0("NHANES 2017-2018, n = ", nrow(s),
                         ". WLSMV constrains three thresholds and one loading per item; MLR constrains one intercept and one loading,\nso the two panels are not on a comparable scale and are shown with free axes.")) +

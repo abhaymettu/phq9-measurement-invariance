@@ -149,6 +149,9 @@ local({
   check(sc$X2[1] > 3 * sc$X2[2],
         paste("planted item should dominate; got", round(sc$X2[1], 1), "vs",
               round(sc$X2[2], 1)))
+  pt <- parTable(fits$scalar)
+  check(all(pt$free[pt$lhs == "dep" & pt$op == "~1" & pt$group > 1] > 0),
+        "the ordinal scalar model must free the latent mean outside group 1")
   t <- fit_table(fits)
   check(t$chisq[3] - t$chisq[2] > 40,
         paste("constraining thresholds should hurt fit; chisq rose only",

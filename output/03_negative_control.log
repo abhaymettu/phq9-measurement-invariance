@@ -1,8 +1,8 @@
 === 1. Random two-group splits, 20 replications ===
 Same sequence, same 0.010 / 0.015 cutoffs, arbitrary groups.
 
-WLSMV  scalar dCFI: median +0.00007, worst -0.00049, range [-0.00049, +0.00067]
-       scalar dRMSEA: median -0.00556, worst -0.00468
+WLSMV  scalar dCFI: median -0.00043, worst -0.00114, range [-0.00114, +0.00017]
+       scalar dRMSEA: median -0.00448, worst -0.00344
        FAIL verdicts: 0 of 20
 
 MLR    scalar dCFI: median -0.00465, worst -0.00558, range [-0.00558, -0.00417]
@@ -10,7 +10,7 @@ MLR    scalar dCFI: median -0.00465, worst -0.00558, range [-0.00558, -0.00417]
        FAIL verdicts: 0 of 20
 
 === Random six-group splits, 10 replications (mirrors the race test) ===
-WLSMV  scalar dCFI: median +0.00037, worst -0.00090, FAIL 0 of 10
+WLSMV  scalar dCFI: median -0.00029, worst -0.00138, FAIL 0 of 10
 MLR    scalar dCFI: median -0.00730, worst -0.00881, FAIL 0 of 10
 
 === 2. Simulated non-invariance planted on item 5 (Appetite change) ===
@@ -23,17 +23,27 @@ cutoff is a rule for approximate misfit in real data, not for a model that
 is correct by construction. This is also the check that caught the
 intercept-identification bug documented in R/invariance.R.
 
-shift +0.0: chisq rise    11.3 on 18 df,  worst item = 4 Low energy            planted item rank 6/9  X2    1.8 vs   3.7 next
-shift +0.2: chisq rise    33.9 on 18 df,  worst item = 5 Appetite change       planted item rank 1/9  X2   18.6 vs   4.9 next
-shift +0.4: chisq rise    45.6 on 18 df,  worst item = 5 Appetite change       planted item rank 1/9  X2   47.8 vs   7.4 next
-shift +0.6: chisq rise   205.8 on 18 df,  worst item = 5 Appetite change       planted item rank 1/9  X2  225.8 vs   9.1 next
+shift +0.0: chisq rise    12.0 on 17 df,  worst item = 4 Low energy            planted item rank 6/9  X2    1.9 vs   3.8 next
+shift +0.2: chisq rise    34.0 on 17 df,  worst item = 5 Appetite change       planted item rank 1/9  X2   18.4 vs   6.4 next
+shift +0.4: chisq rise    46.6 on 17 df,  worst item = 5 Appetite change       planted item rank 1/9  X2   49.6 vs   7.0 next
+shift +0.6: chisq rise   208.0 on 17 df,  worst item = 5 Appetite change       planted item rank 1/9  X2  228.0 vs   8.3 next
 
 With no shift the chi-square rise is at its degrees of freedom and the
 item ranking is noise, as it must be. With a shift the ranking puts the
 planted item first by a wide margin, so the localisation step points at the
 right item rather than scattering blame across the questionnaire.
 
-=== 3. Recovery of a known gap decomposition ===
+=== 3. Planted latent mean difference, no item bias ===
+Identical item parameters in both groups; only the trait mean differs.
+A correct scalar test must pass. The original specification, which kept
+both latent means at zero, is run beside it to show what it did.
+
+latent diff 0.0 SD, means fixed (original) scalar dCFI mean -0.0000, worst -0.0001, FAIL 0 of 5
+latent diff 0.0 SD, means free             scalar dCFI mean +0.0000, worst +0.0000, FAIL 0 of 5
+latent diff 0.5 SD, means fixed (original) scalar dCFI mean -0.0279, worst -0.0315, FAIL 5 of 5
+latent diff 0.5 SD, means free             scalar dCFI mean +0.0000, worst -0.0003, FAIL 0 of 5
+
+=== 4. Recovery of a known gap decomposition ===
 Simulate a true latent mean difference of 0.25 SD plus a planted
 intercept shift on item 5, then see whether decompose_gap splits the
 observed sum-score gap the way it was built. 20 replications, because one

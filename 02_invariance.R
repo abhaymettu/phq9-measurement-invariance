@@ -55,9 +55,52 @@ cat("information about practical non-invariance.\n")
 cat("\n=== Chi-square difference tests, shown to make that point concrete ===\n")
 fits_sex <- invariance_sequence(s, "sex", ordinal = FALSE)
 print(anova(fits_sex$configural, fits_sex$metric, fits_sex$scalar))
+fits_sex_o <- invariance_sequence(s, "sex", ordinal = TRUE)
+print(anova(fits_sex_o$metric, fits_sex_o$scalar))
 
 # ---------------------------------------------------------------------------
-# Sex is the case that fails under both estimators, so it is the focus.
+# The ordinal sex result under a second identification. Wu and Estabrook
+# (2016) constrain thresholds before loadings and free the latent means only
+# when intercepts are constrained, so their scalar model is the same model as
+# the corrected scalar rung above, reached from a different metric baseline.
+# Reporting both shows the verdict does not hang on the baseline.
+cat("\n=== Sex, WLSMV, Wu and Estabrook (2016) sequence (semTools::measEq.syntax) ===\n")
+we <- we2016_sequence(s, "sex")
+we_tab <- fit_table(we)
+print(we_tab[, c("model", "chisq", "df", "cfi", "rmsea", "srmr", "d_cfi", "d_rmsea", "verdict")],
+      row.names = FALSE, digits = 4)
+we_lrt <- suppressWarnings(lavTestLRT(we$metric, we$scalar))
+cat(sprintf("scaled chi-square difference, metric to scalar: %.1f on %d df, p = %.2g\n",
+            we_lrt[2, "Chisq diff"], we_lrt[2, "Df diff"], we_lrt[2, "Pr(>Chisq)"]))
+cat(sprintf("unscaled CFI change, metric to scalar: %+.4f\n",
+            fitMeasures(we$scalar, "cfi") - fitMeasures(we$metric, "cfi")))
+cat("Approximate fit passes; exact scalar invariance is rejected.\n")
+
+# What partial invariance on the ordinal model does to the latent sex gap.
+# A freed item's thresholds and loading are released, and the gap is read
+# from the remaining items.
+cat("\nLatent mean of men relative to women (women = 0, SD units), freeing items:\n")
+part_sets <- list(none = character(0), `4` = "DPQ040", `4+5` = c("DPQ040", "DPQ050"),
+                  `4+5+9` = c("DPQ040", "DPQ050", "DPQ090"),
+                  `4+5+8+9` = c("DPQ040", "DPQ050", "DPQ080", "DPQ090"))
+gap_rows <- list()
+for (nm in names(part_sets)) {
+  items <- part_sets[[nm]]
+  f <- if (length(items)) we2016_sequence(s, "sex", partial = partial_labels(items))$scalar else we$scalar
+  lm2 <- latent_means(f)
+  gap_rows[[nm]] <- data.frame(freed = nm, male_mean = lm2[lm2 != 0][1],
+                               cfi = fitMeasures(f, "cfi.scaled"))
+}
+gaps <- do.call(rbind, gap_rows)
+gaps$shrink_pct <- 100 * (1 - gaps$male_mean / gaps$male_mean[1])
+print(gaps, row.names = FALSE, digits = 4)
+res$we2016 <- list(table = we_tab, lrt = we_lrt, gaps = gaps)
+
+# ---------------------------------------------------------------------------
+# Sex is the focus. Under MLR scalar fails and the search below releases items
+# until it passes. Under WLSMV the corrected scalar model already passes, so
+# nothing is released; the item-level picture for the ordinal model comes from
+# the score tests here and from the IRT stages (05 to 09).
 freed_by_est <- list()
 for (o in c(TRUE, FALSE)) {
   est <- if (o) "WLSMV" else "MLR"
@@ -67,8 +110,18 @@ for (o in c(TRUE, FALSE)) {
   sc$somatic <- sc$item %in% SOMATIC_ITEMS
   print(sc[, c("item_label", "X2", "somatic")], row.names = FALSE, digits = 4)
 
-  cat("\nReleasing constraints one item at a time, worst score statistic first:\n")
   release <- character(0); path <- list()
+  full_verdict <- res$seq[[paste("sex", est)]]$verdict[3]
+  if (full_verdict == "pass") {
+    cat("\nFull scalar invariance already passes; no constraints released.\n")
+    res$partial_path[[est]] <- data.frame(estimator = est, k = 0, freed = "",
+                                          d_cfi = res$seq[[paste("sex", est)]]$d_cfi[3],
+                                          d_rmsea = res$seq[[paste("sex", est)]]$d_rmsea[3],
+                                          verdict = "pass")
+    freed_by_est[[est]] <- release
+    next
+  }
+  cat("\nReleasing constraints one item at a time, worst score statistic first:\n")
   for (it in sc$item) {
     release <- c(release, it)
     t <- fit_table(invariance_sequence(s, "sex", ordinal = o,
@@ -88,8 +141,9 @@ for (o in c(TRUE, FALSE)) {
 }
 freed <- freed_by_est$MLR
 res$freed <- freed_by_est
-cat("\nItems flagged by both estimators:",
-    paste(PHQ_LABELS[intersect(freed_by_est$WLSMV, freed_by_est$MLR)], collapse = ", "), "\n")
+both_est <- intersect(freed_by_est$WLSMV, freed_by_est$MLR)
+cat("\nItems released under both estimators:",
+    if (length(both_est)) paste(PHQ_LABELS[both_est], collapse = ", ") else "none", "\n")
 
 # ---------------------------------------------------------------------------
 cat("\n=== Consequence for a naive female minus male comparison ===\n")
